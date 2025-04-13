@@ -4,33 +4,33 @@ A web application for coaching and psychological counseling.
 
 ## Project Description
 - [ ] 1 Client account (`feature/client-account`)
-  - [ ] Registration
-  - [ ] Profile
-  - [ ] Session History
+  - [ ] Registration (`feature/user-registration`)
+  - [ ] Profile (`feature/user-profile`)
+  - [ ] Session History (`feature/session-history`)
 
 - [ ] 2 Booking system (`feature/booking-system`)
-  - [ ] Ability to book appointments (US time, EU)
+  - [ ] Ability to book appointments (US time, EU) (`feature/appointment-booking`)
     - [ ] Personal or online session
-  - [ ] View available slots
-  - [ ] Cancel or reschedule sessions
+  - [ ] View available slots (`feature/timezone-management`)
+  - [ ] Cancel or reschedule sessions (`feature/session-cancellation`)
     - [ ] More than 24 hours in advance – allowed
     - [ ] Less than 24 hours – admin only
 
 - [ ] 3 List of Services and Prices (`feature/services-prices`)
 
 - [ ] 4 Payment integration (`feature/payment-integration`)
-  - [ ] PayPall
-  - [ ] Venmo
-  - [ ] Cash
+  - [ ] PayPall (`feature/paypal-integration`)
+  - [ ] Venmo (`feature/venmo-integration`)
+  - [ ] Cash (`feature/cash-payment-handling`)
 
 - [ ] 5 Content management (`feature/content-management`)
-  - [ ] Downloadable materials
-  - [ ] Articles
-  - [ ] Courses
+  - [ ] Downloadable materials (`feature/material-downloads`)
+  - [ ] Articles (`feature/article-management`)
+  - [ ] Courses (`feature/course-system`)
 
 - [ ] 6 Notifications (`feature/notifications`)
-  - [ ] Session reminders
-  - [ ] News and announcements
+  - [ ] Session reminders (`feature/session-reminders`)
+  - [ ] News and announcements (`feature/announcements`)
 
 - [ ] 7 Session Feedback (`feature/session-feedback`)
   - [ ] Rating system after completed session
