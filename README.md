@@ -41,26 +41,6 @@ A web application for coaching and psychological counseling.
   - [ ] Payment overviews
   - [ ] Client engagement analytics
 
-### Sub-feature Branches
-- Client Account:
-  - `feature/user-registration`
-  - `feature/user-profile`
-  - `feature/session-history`
-
-- Booking System:
-  - `feature/appointment-booking`
-  - `feature/timezone-management`
-  - `feature/session-cancellation`
-
-- Payment Integration:
-  - `feature/paypal-integration`
-  - `feature/venmo-integration`
-  - `feature/cash-payment-handling`
-
-- Content Management:
-  - `feature/material-downloads`
-  - `feature/article-management`
-  - `feature/course-system`
 
 ## Development Setup
 
