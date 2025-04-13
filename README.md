@@ -41,6 +41,69 @@ A web application for coaching and psychological counseling.
   - [ ] Payment overviews
   - [ ] Client engagement analytics
 
+## Database Structure
+
+### Entity Relationship Diagram
+![ER diagram](./files/ER_diagram.png)
+
+### Models
+- [ ] User/Client
+  - [ ] id (Integer, PK)
+  - [ ] username (varchar[150])
+  - [ ] password (varchar[128])
+  - [ ] email (varchar[254])
+  - [ ] first_name (varchar[150])
+  - [ ] last_name (varchar[150])
+  - [ ] is_client (bool)
+  - [ ] is_coach (bool)
+  - [ ] is_active (bool)
+  - [ ] date_joined (datetime)
+
+- [ ] Profile
+  - [ ] id (Integer, PK)
+  - [ ] user_id (FK)
+  - [ ] phone (varchar[20])
+  - [ ] timezone (varchar[50])
+  - [ ] bio (text)
+  - [ ] preferred_contact (varchar[20])
+
+- [ ] Session
+  - [ ] id (Integer, PK)
+  - [ ] client_id (FK)
+  - [ ] coach_id (FK)
+  - [ ] service_id (FK)
+  - [ ] date_time (datetime)
+  - [ ] duration (integer)
+  - [ ] type (varchar[20])
+  - [ ] status (varchar[20])
+  - [ ] notes (text)
+  - [ ] created (datetime)
+  - [ ] updated (datetime)
+
+- [ ] Service
+  - [ ] id (Integer, PK)
+  - [ ] name (varchar[100])
+  - [ ] description (text)
+  - [ ] price (decimal)
+  - [ ] duration (integer)
+  - [ ] is_active (bool)
+
+- [ ] Payment
+  - [ ] id (Integer, PK)
+  - [ ] session_id (FK)
+  - [ ] amount (decimal)
+  - [ ] payment_method (varchar[50])
+  - [ ] status (varchar[20])
+  - [ ] transaction_id (varchar[100])
+  - [ ] created_at (datetime)
+
+- [ ] Review
+  - [ ] id (Integer, PK)
+  - [ ] session_id (FK)
+  - [ ] rating (integer)
+  - [ ] comment (text)
+  - [ ] created_at (datetime)
+
 
 ## Development Setup
 
