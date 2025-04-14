@@ -4,33 +4,33 @@ A web application for coaching and psychological counseling.
 
 ## Project Description
 - [ ] 1 Client account (`feature/client-account`)
-  - [ ] Registration
-  - [ ] Profile
-  - [ ] Session History
+  - [ ] Registration (`feature/user-registration`)
+  - [ ] Profile (`feature/user-profile`)
+  - [ ] Session History (`feature/session-history`)
 
 - [ ] 2 Booking system (`feature/booking-system`)
-  - [ ] Ability to book appointments (US time, EU)
+  - [ ] Ability to book appointments (US time, EU) (`feature/appointment-booking`)
     - [ ] Personal or online session
-  - [ ] View available slots
-  - [ ] Cancel or reschedule sessions
+  - [ ] View available slots (`feature/timezone-management`)
+  - [ ] Cancel or reschedule sessions (`feature/session-cancellation`)
     - [ ] More than 24 hours in advance – allowed
     - [ ] Less than 24 hours – admin only
 
 - [ ] 3 List of Services and Prices (`feature/services-prices`)
 
 - [ ] 4 Payment integration (`feature/payment-integration`)
-  - [ ] PayPall
-  - [ ] Venmo
-  - [ ] Cash
+  - [ ] PayPall (`feature/paypal-integration`)
+  - [ ] Venmo (`feature/venmo-integration`)
+  - [ ] Cash (`feature/cash-payment-handling`)
 
 - [ ] 5 Content management (`feature/content-management`)
-  - [ ] Downloadable materials
-  - [ ] Articles
-  - [ ] Courses
+  - [ ] Downloadable materials (`feature/material-downloads`)
+  - [ ] Articles (`feature/article-management`)
+  - [ ] Courses (`feature/course-system`)
 
 - [ ] 6 Notifications (`feature/notifications`)
-  - [ ] Session reminders
-  - [ ] News and announcements
+  - [ ] Session reminders (`feature/session-reminders`)
+  - [ ] News and announcements (`feature/announcements`)
 
 - [ ] 7 Session Feedback (`feature/session-feedback`)
   - [ ] Rating system after completed session
@@ -41,26 +41,71 @@ A web application for coaching and psychological counseling.
   - [ ] Payment overviews
   - [ ] Client engagement analytics
 
-### Sub-feature Branches
-- Client Account:
-  - `feature/user-registration`
-  - `feature/user-profile`
-  - `feature/session-history`
+## Database Structure
 
-- Booking System:
-  - `feature/appointment-booking`
-  - `feature/timezone-management`
-  - `feature/session-cancellation`
+### Entity Relationship Diagram
+![ER diagram](./files/ER_diagram.png)
 
-- Payment Integration:
-  - `feature/paypal-integration`
-  - `feature/venmo-integration`
-  - `feature/cash-payment-handling`
+### Models
+- [ ] User/Client
+  - [ ] id (Integer, PK)
+  - [ ] username (varchar[150])
+  - [ ] password (varchar[128])
+  - [ ] email (varchar[254])
+  - [ ] first_name (varchar[150])
+  - [ ] last_name (varchar[150])
+  - [ ] is_active (bool)
+  - [ ] date_joined (datetime)
 
-- Content Management:
-  - `feature/material-downloads`
-  - `feature/article-management`
-  - `feature/course-system`
+- [ ] Profile
+  - [ ] id (Integer, PK)
+  - [ ] user_id (FK)
+  - [ ] phone (varchar[20])
+  - [ ] timezone (varchar[50])
+  - [ ] bio (text)
+  - [ ] preferred_contact (varchar[20])
+  - [ ] is_client (bool)
+  - [ ] is_coach (bool)
+
+- [ ] Session
+  - [ ] id (Integer, PK)
+  - [ ] client_id (FK)
+  - [ ] coach_id (FK)
+  - [ ] service_id (FK)
+  - [ ] date_time (datetime)
+  - [ ] duration (integer)
+  - [ ] type (enum: 'online', 'osobní')
+  - [ ] status (enum: 'CANCELLED', 'CONFIRMED', 'CHANGED')
+  - [ ] notes (text)
+  - [ ] created (datetime)
+  - [ ] updated (datetime)
+
+- [ ] Service
+  - [ ] id (Integer, PK)
+  - [ ] name (varchar[100])
+  - [ ] description (text)
+  - [ ] price (decimal)
+  - [ ] duration (integer)
+  - [ ] is_active (bool)
+  - [ ] currency (varchar[100])
+
+- [ ] Payment
+  - [ ] id (Integer, PK)
+  - [ ] session_id (FK)
+  - [ ] amount (decimal)
+  - [ ] payment_method (enum: 'cash', 'paypal', 'Venmo')
+  - [ ] status (varchar[20])
+  - [ ] transaction_id (varchar[100])
+  - [ ] currency (varchar[100])
+  - [ ] created_at (datetime)
+
+- [ ] Review
+  - [ ] id (Integer, PK)
+  - [ ] session_id (FK)
+  - [ ] rating (integer, 1-5)
+  - [ ] comment (text)
+  - [ ] created_at (datetime)
+
 
 ## Development Setup
 
