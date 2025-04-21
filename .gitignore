@@ -1,10 +1,6 @@
 # .gitignore pro Django
+/.idea
+/.env
+/db.sqlite3
 *.pyc
-__pycache__/
-db.sqlite3
-.env
-.vscode/
-.idea/
-*.log
-/static/
-/media/
+/images/

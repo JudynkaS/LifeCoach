@@ -54,8 +54,6 @@ A web application for coaching and psychological counseling.
   - [ ] email (varchar[254])
   - [ ] first_name (varchar[150])
   - [ ] last_name (varchar[150])
-  - [ ] is_client (bool)
-  - [ ] is_coach (bool)
   - [ ] is_active (bool)
   - [ ] date_joined (datetime)
 
@@ -66,6 +64,8 @@ A web application for coaching and psychological counseling.
   - [ ] timezone (varchar[50])
   - [ ] bio (text)
   - [ ] preferred_contact (varchar[20])
+  - [ ] is_client (bool)
+  - [ ] is_coach (bool)
 
 - [ ] Session
   - [ ] id (Integer, PK)
@@ -74,8 +74,8 @@ A web application for coaching and psychological counseling.
   - [ ] service_id (FK)
   - [ ] date_time (datetime)
   - [ ] duration (integer)
-  - [ ] type (varchar[20])
-  - [ ] status (varchar[20])
+  - [ ] type (enum: 'online', 'osobní')
+  - [ ] status (enum: 'CANCELLED', 'CONFIRMED', 'CHANGED')
   - [ ] notes (text)
   - [ ] created (datetime)
   - [ ] updated (datetime)
@@ -87,20 +87,22 @@ A web application for coaching and psychological counseling.
   - [ ] price (decimal)
   - [ ] duration (integer)
   - [ ] is_active (bool)
+  - [ ] currency (varchar[100])
 
 - [ ] Payment
   - [ ] id (Integer, PK)
   - [ ] session_id (FK)
   - [ ] amount (decimal)
-  - [ ] payment_method (varchar[50])
+  - [ ] payment_method (enum: 'cash', 'paypal', 'Venmo')
   - [ ] status (varchar[20])
   - [ ] transaction_id (varchar[100])
+  - [ ] currency (varchar[100])
   - [ ] created_at (datetime)
 
 - [ ] Review
   - [ ] id (Integer, PK)
   - [ ] session_id (FK)
-  - [ ] rating (integer)
+  - [ ] rating (integer, 1-5)
   - [ ] comment (text)
   - [ ] created_at (datetime)
 
