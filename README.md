@@ -4,7 +4,7 @@ A web application for coaching and psychological counseling.
 
 ## Project Description
 - [ ] 1 Client account (`feature/client-account`)
-  - [ ] Registration (`feature/user-registration`)
+  - [x] Registration (`feature/user-registration`)
   - [ ] Profile (`feature/user-profile`)
   - [ ] Session History (`feature/session-history`)
 
