@@ -137,9 +137,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
 
 # Custom user model
-AUTH_USER_MODEL = 'viewer.User'
+AUTH_USER_MODEL = 'accounts.User'
 
 # REST Framework settings
 REST_FRAMEWORK = {
@@ -156,3 +159,19 @@ REST_FRAMEWORK = {
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Crispy Forms Settings
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+# Crispy Forms Bootstrap5 Settings
+CRISPY_FAIL_SILENTLY = True
+CRISPY_CLASS_CONVERTERS = {
+    'textinput': 'form-control',
+    'emailinput': 'form-control',
+    'passwordinput': 'form-control',
+    'textarea': 'form-control',
+    'select': 'form-select',
+    'checkboxinput': 'form-check-input',
+    'radioinput': 'form-check-input',
+}
