@@ -1,50 +1,54 @@
 from django.contrib import admin
 from .models import (
     SessionType, SessionStatus, PaymentMethod,
-    Profile, Service, Session, Payment, Review
+    Service, Session, Payment, Review
 )
 
 @admin.register(SessionType)
 class SessionTypeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'code')
-    search_fields = ('name', 'code')
+    list_display = ('name', 'description')
+    search_fields = ('name',)
+
 
 @admin.register(SessionStatus)
 class SessionStatusAdmin(admin.ModelAdmin):
-    list_display = ('name', 'code')
-    search_fields = ('name', 'code')
+    list_display = ('name', 'description')
+    search_fields = ('name',)
+
 
 @admin.register(PaymentMethod)
 class PaymentMethodAdmin(admin.ModelAdmin):
-    list_display = ('name', 'code')
-    search_fields = ('name', 'code')
+    list_display = ('name', 'description')
+    search_fields = ('name',)
 
-@admin.register(Profile)
-class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'phone', 'timezone', 'is_client', 'is_coach')
-    search_fields = ('user__username', 'user__email', 'phone')
-    list_filter = ('is_client', 'is_coach')
 
 @admin.register(Service)
 class ServiceAdmin(admin.ModelAdmin):
-    list_display = ('name', 'price', 'currency', 'duration', 'is_active')
-    search_fields = ('name', 'description')
-    list_filter = ('is_active', 'currency')
+    list_display = ('name', 'description', 'duration', 'price', 'coach')
+    list_filter = ('coach', 'session_type')
+    search_fields = ('name', 'description', 'coach__username')
+    raw_id_fields = ('coach', 'session_type')
+
 
 @admin.register(Session)
 class SessionAdmin(admin.ModelAdmin):
-    list_display = ('client', 'coach', 'service', 'date_time', 'duration', 'status')
-    search_fields = ('client__username', 'coach__username', 'service__name')
-    list_filter = ('status', 'session_type')
+    list_display = ('service', 'client', 'coach', 'scheduled_at', 'status')
+    list_filter = ('status', 'service', 'client', 'coach')
+    search_fields = ('client__username', 'coach__username', 'service__name', 'notes')
+    raw_id_fields = ('client', 'coach', 'service', 'status')
+
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
-    list_display = ('session', 'amount', 'currency', 'status', 'created')
-    search_fields = ('session__client__username', 'transaction_id')
-    list_filter = ('status', 'payment_method')
+    list_display = ('session', 'amount', 'payment_method', 'paid_at')
+    list_filter = ('payment_method', 'paid_at')
+    search_fields = ('session__client__username', 'session__service__name')
+    raw_id_fields = ('session', 'payment_method')
+
 
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
     list_display = ('session', 'rating', 'created')
-    search_fields = ('session__client__username', 'comment')
-    list_filter = ('rating',)
+    list_filter = ('rating', 'created')
+    search_fields = ('session__client__username', 'session__coach__username', 'comment')
+    raw_id_fields = ('session',)
