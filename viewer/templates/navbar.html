@@ -8,25 +8,25 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'viewer:home' %}">Domů</a>
+                    <a class="nav-link" href="{% url 'viewer:home' %}">Home</a>
                 </li>
                 {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'accounts:profile' %}">Profil</a>
+                        <a class="nav-link" href="{% url 'accounts:profile' %}">Profile</a>
                     </li>
                 {% endif %}
             </ul>
             <ul class="navbar-nav">
                 {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'accounts:logout' %}">Odhlásit</a>
+                        <a class="nav-link" href="{% url 'accounts:logout' %}">Logout</a>
                     </li>
                 {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'accounts:login' %}">Přihlásit</a>
+                        <a class="nav-link" href="{% url 'accounts:login' %}">Login</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'accounts:register' %}">Registrovat</a>
+                        <a class="nav-link" href="{% url 'accounts:register' %}">Register</a>
                     </li>
                 {% endif %}
             </ul>
