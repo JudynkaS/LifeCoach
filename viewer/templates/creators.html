@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Coaches and Clients
+{% endblock %}
+
+{% block content %}
+    <h2>Coaches</h2>
+    <div class="row">
+        {% for creator in creators %}
+            {% if creator.is_coach %}
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        {% if creator.image_set.first %}
+                            <img src="{{ creator.image_set.first.image.url }}" class="card-img-top" alt="{{ creator.name }} {{ creator.surname }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ creator.name }} {{ creator.surname }}</h5>
+                            <p class="card-text">{{ creator.biography|truncatewords:30 }}</p>
+                            <a href="{% url 'viewer:creator' creator.id %}" class="btn btn-primary">View Profile</a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <h2 class="mt-4">Clients</h2>
+    <div class="row">
+        {% for creator in creators %}
+            {% if creator.is_client %}
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        {% if creator.image_set.first %}
+                            <img src="{{ creator.image_set.first.image.url }}" class="card-img-top" alt="{{ creator.name }} {{ creator.surname }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ creator.name }} {{ creator.surname }}</h5>
+                            <p class="card-text">{{ creator.biography|truncatewords:30 }}</p>
+                            <a href="{% url 'viewer:creator' creator.id %}" class="btn btn-primary">View Profile</a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    {% include 'paginator.html' %}
+{% endblock %} 

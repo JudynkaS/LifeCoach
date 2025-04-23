@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {{ creator.name }} {{ creator.surname }}
+{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            <h2>{{ creator.name }} {{ creator.surname }}</h2>
+        </div>
+        <div class="card-body">
+            <p><strong>Country:</strong> {{ creator.country }}</p>
+            <p><strong>Date of Birth:</strong> {{ creator.date_of_birth }}</p>
+            {% if creator.date_of_death %}
+                <p><strong>Date of Death:</strong> {{ creator.date_of_death }}</p>
+            {% endif %}
+            <p><strong>Biography:</strong> {{ creator.biography }}</p>
+        </div>
+    </div>
+
+    {% if creator.image_set.all %}
+        <h3 class="mt-4">Images</h3>
+        <div class="row">
+            {% for image in creator.image_set.all %}
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <img src="{{ image.image.url }}" class="card-img-top" alt="{{ image.description }}">
+                        <div class="card-body">
+                            <p class="card-text">{{ image.description }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %} 
