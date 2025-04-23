@@ -2,13 +2,13 @@
 {% load crispy_forms_tags %}
 
 {% block title %}
-    Formulář
+    Form
 {% endblock %}
 
 {% block content %}
     <form method="post">
         {% csrf_token %}
         {{ form|crispy }}
-        <input type="submit" id="id_submit" value="Uložit" class="btn btn-primary">
+        <input type="submit" id="id_submit" value="Save" class="btn btn-primary">
     </form>
 {% endblock %} 
