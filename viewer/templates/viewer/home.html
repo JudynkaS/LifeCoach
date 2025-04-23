@@ -1,24 +1,51 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Welcome to LifeCoach{% endblock %}
+{% block title %}Home{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
-    <div class="welcome-section card border-0 bg-transparent">
-        <h1 class="display-4">Welcome to LifeCoach</h1>
-        <p class="lead text-dark">Your personal coaching and psychological counseling platform.</p>
+    <div class="text-center mb-5">
+        <h1 class="display-3 text-success">Welcome to LifeCoach</h1>
+        <p class="lead text-muted">Your personal coaching and psychological counseling platform.</p>
         <hr class="my-4">
-        <p class="text-dark">Start your journey to personal growth and well-being today.</p>
+        <p class="mb-4">Start your journey to personal growth and well-being today.</p>
         {% if not user.is_authenticated %}
-            <div class="mt-4">
-                <a class="btn btn-primary btn-lg" href="{% url 'accounts:login' %}" role="button">Get Started</a>
-            </div>
+            <a class="btn btn-success btn-lg px-4" href="{% url 'accounts:login' %}" role="button">Get Started</a>
         {% else %}
-            <div class="mt-4">
-                <a class="btn btn-primary btn-lg" href="{% url 'accounts:profile' %}" role="button">View Profile</a>
-            </div>
+            {% if user.profile.is_coach %}
+                <a class="btn btn-success btn-lg px-4" href="{% url 'viewer:services' %}" role="button">Manage Services</a>
+            {% else %}
+                <a class="btn btn-success btn-lg px-4" href="{% url 'viewer:services' %}" role="button">View Services</a>
+            {% endif %}
         {% endif %}
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 bg-light">
+                <div class="card-body text-center">
+                    <h3 class="card-title text-success mb-3">Personal Sessions</h3>
+                    <p class="card-text">Experience one-on-one coaching sessions tailored to your individual needs and goals.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 bg-light">
+                <div class="card-body text-center">
+                    <h3 class="card-title text-success mb-3">Online Coaching</h3>
+                    <p class="card-text">Connect from anywhere with convenient online coaching sessions that fit your schedule.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 bg-light">
+                <div class="card-body text-center">
+                    <h3 class="card-title text-success mb-3">Your Progress</h3>
+                    <p class="card-text">Track your development and celebrate achievements as you work towards your goals.</p>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %} 
