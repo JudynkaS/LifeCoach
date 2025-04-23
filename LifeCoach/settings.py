@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'default-secret-key')  # 'default-secret-ke
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'kubernetes.docker.internal']
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -44,14 +44,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'django_dump_load_utf8',
-    'widget_tweaks',
+
     'crispy_forms',
     'crispy_bootstrap5',
-    'rest_framework',
-    'rest_framework.authtoken',
 
-    'viewer',
     'accounts',
+    'viewer',
 ]
 
 MIDDLEWARE = [
@@ -96,6 +94,9 @@ DATABASES = {
         'PASSWORD': os.getenv('DB_PASSWORD'),  # heslo je v .env souboru
         'HOST': 'localhost',
         'PORT': '3306',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        }
     }
 }
 
@@ -136,42 +137,20 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
+STATIC_URL = 'static/'
 
-# Custom user model
-AUTH_USER_MODEL = 'accounts.User'
-
-# REST Framework settings
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-    ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-    ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
-}
+# Images
+MEDIA_ROOT = BASE_DIR
+MEDIA_URL = 'images/'
 
 # Default primary key field type
+# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Crispy Forms Settings
+LOGIN_REDIRECT_URL = 'viewer:home'
+LOGOUT_REDIRECT_URL = 'viewer:home'
+
+# Crispy Forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
-
-# Crispy Forms Bootstrap5 Settings
-CRISPY_FAIL_SILENTLY = True
-CRISPY_CLASS_CONVERTERS = {
-    'textinput': 'form-control',
-    'emailinput': 'form-control',
-    'passwordinput': 'form-control',
-    'textarea': 'form-control',
-    'select': 'form-select',
-    'checkboxinput': 'form-check-input',
-    'radioinput': 'form-check-input',
-}
