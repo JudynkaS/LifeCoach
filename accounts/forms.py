@@ -1,63 +1,67 @@
-from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth import get_user_model
 from django.db.transaction import atomic
-from django.forms import CharField, PasswordInput, Textarea
+from django.forms import CharField, PasswordInput, DateField, NumberInput, \
+    Textarea, ModelForm
 
 from accounts.models import Profile
 
-User = get_user_model()
 
-
-class UserRegistrationForm(UserCreationForm):
-    class Meta:
-        model = User
+class SignUpForm(UserCreationForm):
+    class Meta(UserCreationForm.Meta):
         fields = ['username', 'first_name', 'last_name', 'email',
                   'password1', 'password2']
 
         labels = {
-            'username': 'Uživatelské jméno',
-            'first_name': 'Jméno',
-            'last_name': 'Příjmení',
-            'email': 'E-mail',
+            'username': 'Username',
+            'first_name': 'First Name',
+            'last_name': 'Last Name',
+            'email': 'Email',
         }
 
     password1 = CharField(
-        widget=PasswordInput(attrs={'placeholder': 'Heslo'}),
-        label='Heslo'
+        widget=PasswordInput(attrs={'placeholder': 'Password'}),
+        label='Password'
     )
 
     password2 = CharField(
-        widget=PasswordInput(attrs={'placeholder': 'Heslo znovu'}),
-        label='Heslo znovu'
+        widget=PasswordInput(attrs={'placeholder': 'Password again'}),
+        label='Password again'
     )
 
     phone = CharField(
-        label='Telefonní číslo',
-        required=False
-    )
-
-    bio = CharField(
-        widget=Textarea,
-        label='Biografie',
+        label='Phone Number',
         required=False
     )
 
     @atomic
     def save(self, commit=True):
-        user = super().save(commit=False)
-        user.is_active = True
-        user.is_client = True
-        if commit:
-            user.save()
+        self.instance.is_active = True
+        user = super().save(commit)
 
+        date_of_birth = self.cleaned_data.get('date_of_birth')
+        biography = self.cleaned_data.get('biography')
         phone = self.cleaned_data.get('phone')
-        bio = self.cleaned_data.get('bio')
-
-        Profile.objects.create(
+        profile = Profile(
             user=user,
-            phone=phone,
-            bio=bio,
-            is_client=True
+            date_of_birth=date_of_birth,
+            biography=biography,
+            phone=phone
         )
+        if commit:
+            profile.save()
         return user
+
+
+class ProfileUpdateForm(ModelForm):
+    class Meta:
+        model = Profile
+        fields = ['phone', 'timezone', 'bio', 'preferred_contact']
+        labels = {
+            'phone': 'Phone Number',
+            'timezone': 'Time Zone',
+            'bio': 'Biography',
+            'preferred_contact': 'Preferred Contact Method'
+        }
+        widgets = {
+            'bio': Textarea(attrs={'rows': 4}),
+        }
