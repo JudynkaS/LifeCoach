@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Available Services{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Available Services</h1>
+            
+            {% if is_coach %}
+            <div class="mb-4">
+                <a href="{% url 'viewer:service_create' %}" class="btn btn-primary">Add New Service</a>
+            </div>
+            {% endif %}
+            
+            <div class="row">
+                {% for service in services %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ service.name }}</h5>
+                            <p class="card-text">{{ service.description }}</p>
+                            <ul class="list-unstyled">
+                                <li><strong>Duration:</strong> {{ service.duration }} minutes</li>
+                                <li><strong>Price:</strong> {{ service.price }} {{ service.currency }}</li>
+                                <li><strong>Type:</strong> {{ service.session_type }}</li>
+                            </ul>
+                        </div>
+                        <div class="card-footer">
+                            <a href="{% url 'viewer:service_detail' service.pk %}" class="btn btn-primary">View Details</a>
+                            {% if is_coach and service.coach == user %}
+                            <div class="mt-2">
+                                <a href="{% url 'viewer:service_edit' service.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                <a href="{% url 'viewer:service_delete' service.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        No services available at the moment.
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
