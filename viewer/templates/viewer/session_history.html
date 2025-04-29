@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Session History{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Session History</h1>
+            
+            <div class="mb-4">
+                <a href="{% url 'viewer:book_session' %}" class="btn btn-primary">Book New Session</a>
+            </div>
+            
+            <h2 class="h4 mb-3">Upcoming Sessions</h2>
+            <div class="table-responsive mb-5">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Service</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for session in upcoming_sessions %}
+                        <tr>
+                            <td>{{ session.date_time|date:"F j, Y, g:i a" }}</td>
+                            <td>{{ session.service.name }}</td>
+                            <td>{{ session.get_type_display }}</td>
+                            <td>
+                                <span class="badge bg-{% if session.status == 'CONFIRMED' %}success{% elif session.status == 'CANCELLED' %}danger{% else %}warning{% endif %}">
+                                    {{ session.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{% url 'viewer:session_detail' session.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                                {% if session.can_cancel %}
+                                <a href="{% url 'viewer:session_detail' session.pk %}" class="btn btn-sm btn-outline-danger">Cancel</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No upcoming sessions</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <h2 class="h4 mb-3">Past Sessions</h2>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Service</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for session in past_sessions %}
+                        <tr>
+                            <td>{{ session.date_time|date:"F j, Y, g:i a" }}</td>
+                            <td>{{ session.service.name }}</td>
+                            <td>{{ session.get_type_display }}</td>
+                            <td>
+                                <span class="badge bg-{% if session.status == 'CONFIRMED' %}success{% elif session.status == 'CANCELLED' %}danger{% else %}warning{% endif %}">
+                                    {{ session.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{% url 'viewer:session_detail' session.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No past sessions</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

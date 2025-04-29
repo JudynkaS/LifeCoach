@@ -16,36 +16,6 @@ class Migration(migrations.Migration):
             name='session',
             options={'ordering': ['-date_time']},
         ),
-        migrations.RenameField(
-            model_name='session',
-            old_name='scheduled_at',
-            new_name='date_time',
-        ),
-        migrations.AddField(
-            model_name='service',
-            name='currency',
-            field=models.CharField(default='USD', max_length=3),
-        ),
-        migrations.AddField(
-            model_name='service',
-            name='is_active',
-            field=models.BooleanField(default=True),
-        ),
-        migrations.AddField(
-            model_name='session',
-            name='duration',
-            field=models.IntegerField(default=60),
-        ),
-        migrations.AddField(
-            model_name='session',
-            name='type',
-            field=models.CharField(choices=[('online', 'Online'), ('personal', 'Personal')], default='online', max_length=10),
-        ),
-        migrations.AlterField(
-            model_name='service',
-            name='duration',
-            field=models.IntegerField(),
-        ),
         migrations.AlterField(
             model_name='session',
             name='client',

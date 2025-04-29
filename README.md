@@ -2,6 +2,7 @@
 A web application for coaching and psychological counseling.  
 
 ## Project Description
+
 - [x] 1 Client account (`feature/client-account`)
   - [x] Registration (`feature/user-registration`)
     - [x] User registration form
@@ -17,21 +18,21 @@ A web application for coaching and psychological counseling.
     - [ ] Session details
     - [ ] Payment history
 
-- [ ] 2 Booking system (`feature/booking-system`)
-  - [ ] Ability to book appointments (US time, EU) (`feature/appointment-booking`)
-    - [ ] Personal or online session
-    - [ ] Time slot selection
-    - [ ] Service selection
-  - [ ] View available slots (`feature/timezone-management`)
-  - [ ] Cancel or reschedule sessions (`feature/session-cancellation`)
-    - [ ] More than 24 hours in advance – allowed
+- [x] 2 Booking system (`feature/booking-system`)
+  - [x] Ability to book appointments (US time, EU) (`feature/appointment-booking`)
+    - [x] Personal or online session
+    - [x] Time slot selection
+    - [x] Service selection
+  - [x] View available slots (`feature/timezone-management`)
+  - [x] Cancel or reschedule sessions (`feature/session-cancellation`)
+    - [x] More than 24 hours in advance – allowed
     - [ ] Less than 24 hours – admin only
 
-- [ ] 3 List of Services and Prices (`feature/services-prices`)
-  - [ ] Service model implementation
-  - [ ] Service catalog view
-  - [ ] Price list
-  - [ ] Service availability calendar
+- [x] 3 List of Services and Prices (`feature/services-prices`)
+  - [x] Service model implementation
+  - [x] Service catalog view
+  - [x] Price list
+  - [x] Service availability calendar
 
 - [ ] 4 Payment integration (`feature/payment-integration`)
   - [ ] PayPal (`feature/paypal-integration`)
@@ -142,12 +143,35 @@ A web application for coaching and psychological counseling.
 - [x] Crispy Forms Integration
 - [x] Bootstrap 5 Integration
 - [x] User Registration System
+  - [x] Simplified registration form
+  - [x] Improved referral source selection
+  - [x] Streamlined terms and conditions
 - [x] Profile Management
   - [x] Profile View and Edit
   - [x] Avatar Upload
   - [x] Contact Preferences
   - [x] Notification Settings
 - [x] Coach/Client Role System
+
+### Booking System
+- [x] Service Management
+  - [x] Service listing
+  - [x] Service details
+  - [x] Service creation/editing
+  - [x] Service availability
+- [x] Session Booking
+  - [x] Booking form
+  - [x] Time slot selection
+  - [x] Service selection
+  - [x] Session confirmation
+- [x] Session Management
+  - [x] Session history
+  - [x] Session details
+  - [x] Session cancellation
+- [x] Google Calendar Integration
+  - [x] Automatic event creation
+  - [x] Event details synchronization
+  - [x] Calendar link generation
 
 ### UI/UX Improvements
 - [x] Responsive Navigation Bar
@@ -193,6 +217,7 @@ A web application for coaching and psychological counseling.
 - MySQL
 - Bootstrap 5
 - Crispy Forms
+- Google Calendar API
 
 ## Installation
 
@@ -228,12 +253,17 @@ SECRET_KEY=your_secret_key
 DB_PASSWORD=your_database_password
 ```
 
-6. Run migrations:
+6. Set up Google Calendar API:
+   - Place your `credentials.json` in the `config/` directory
+   - First time you run the application, it will prompt for Google Calendar authorization
+   - The generated token will be saved in `config/token.json`
+
+7. Run migrations:
 ```bash
 python manage.py migrate
 ```
 
-7. Start the development server:
+8. Start the development server:
 ```bash
 python manage.py runserver
 ```
@@ -316,4 +346,47 @@ python manage.py test registration.test_views
 ```bash
 coverage run --omit="*/tests/*" -m pytest
 coverage html
+```
+
+## Google Calendar API Usage
+
+### Getting Calendar Service
+```python
+from viewer.utils.google_calendar import get_calendar_service
+
+# Získání služby
+service = get_calendar_service()
+```
+
+### Creating Event
+```python
+from datetime import datetime
+from viewer.utils.google_calendar import create_psychology_session
+
+# Create a psychology session
+start_time = datetime(2025, 5, 1, 10, 0)  # May 1, 2025, 10:00 AM
+event = create_psychology_session(
+    client_email='client@example.com',
+    start_time=start_time,
+    duration_minutes=60
+)
+print(f'Event created: {event.get("htmlLink")}')
+```
+
+### Creating Custom Event
+```python
+from datetime import datetime
+from viewer.utils.google_calendar import create_event
+
+start_time = datetime(2025, 5, 1, 10, 0)
+end_time = datetime(2025, 5, 1, 11, 0)
+
+event = create_event(
+    summary='Custom Event',
+    location='Some Location',
+    description='Event description',
+    start_time=start_time,
+    end_time=end_time,
+    timezone='Europe/Prague'
+)
 ```

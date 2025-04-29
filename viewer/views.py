@@ -4,9 +4,11 @@ from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.utils import timezone
 from django.db.models import Q
+from django.contrib import messages
 
 from .models import Session, Service
-from .forms import ServiceForm
+from .forms import ServiceForm, BookingForm
+from .utils.google_calendar import create_psychology_session
 
 class HomeView(TemplateView):
     template_name = 'home.html'
@@ -147,6 +149,44 @@ class ServiceDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def test_func(self):
         service = self.get_object()
         return self.request.user == service.coach
+
+
+class BookingCreateView(LoginRequiredMixin, CreateView):
+    model = Session
+    form_class = BookingForm
+    template_name = 'viewer/booking_form.html'
+    success_url = reverse_lazy('viewer:session_history')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        # Set the client
+        form.instance.client = self.request.user.profile
+        
+        # Create the session
+        response = super().form_valid(form)
+        
+        # Create Google Calendar event
+        try:
+            event = create_psychology_session(
+                client_email=self.request.user.email,
+                start_time=form.instance.date_time,
+                duration_minutes=form.instance.service.duration
+            )
+            messages.success(self.request, f'Session booked successfully! Google Calendar event created: {event.get("htmlLink")}')
+        except Exception as e:
+            messages.warning(self.request, f'Session booked, but failed to create Google Calendar event: {str(e)}')
+        
+        return response
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Book a Session'
+        context['button_text'] = 'Book Session'
+        return context
 
 def home(request):
     return render(request, 'home.html')

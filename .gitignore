@@ -4,3 +4,29 @@
 /db.sqlite3
 *.pyc
 /images/
+
+# Google Calendar API credentials
+config/credentials.json
+config/token.json
+*.pyc
+__pycache__/
+.env
+.venv/
+db.sqlite3
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Media and static files
+media/
+static/admin/
+staticfiles/
+
+# Logs and temporary files
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
