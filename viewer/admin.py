@@ -32,10 +32,10 @@ class ServiceAdmin(admin.ModelAdmin):
 
 @admin.register(Session)
 class SessionAdmin(admin.ModelAdmin):
-    list_display = ('service', 'client', 'coach', 'scheduled_at', 'status')
+    list_display = ('service', 'client', 'coach', 'date_time', 'status')
     list_filter = ('status', 'service', 'client', 'coach')
     search_fields = ('client__username', 'coach__username', 'service__name', 'notes')
-    raw_id_fields = ('client', 'coach', 'service', 'status')
+    raw_id_fields = ('client', 'coach', 'service')
 
 
 @admin.register(Payment)

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {{ genre.name }}
+{% endblock %}
+
+{% block content %}
+    <h2>{{ genre.name }}</h2>
+    <div class="row">
+        {% for session in genre.session_set.all %}
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    {% if session.image_set.first %}
+                        <img src="{{ session.image_set.first.image.url }}" class="card-img-top" alt="{{ session.title }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ session.title }}</h5>
+                        <p class="card-text">{{ session.description|truncatewords:30 }}</p>
+                        <a href="{% url 'viewer:session' session.id %}" class="btn btn-primary">View Details</a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col">
+                <p>No sessions in this category yet.</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% include 'paginator.html' %}
+{% endblock %} 

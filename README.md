@@ -2,16 +2,17 @@
 A web application for coaching and psychological counseling.  
 
 ## Project Description
-- [ ] 1 Client account (`feature/client-account`)
+- [x] 1 Client account (`feature/client-account`)
   - [x] Registration (`feature/user-registration`)
     - [x] User registration form
-    - [x] Profile creation
     - [x] Basic authentication
-  - [ ] Profile (`feature/user-profile`)
-    - [ ] Edit profile information
-    - [ ] Timezone settings
-    - [ ] Contact preferences
-  - [ ] Session History (`feature/session-history`)
+  - [x] Profile Management
+    - [x] Edit profile information
+    - [x] Avatar upload
+    - [x] Contact preferences
+    - [x] Timezone settings
+    - [x] Notification settings
+  - [ ] Session History
     - [ ] View past sessions
     - [ ] Session details
     - [ ] Payment history
@@ -27,7 +28,7 @@ A web application for coaching and psychological counseling.
     - [ ] Less than 24 hours – admin only
 
 - [ ] 3 List of Services and Prices (`feature/services-prices`)
-  - [x] Service model implementation
+  - [ ] Service model implementation
   - [ ] Service catalog view
   - [ ] Price list
   - [ ] Service availability calendar
@@ -78,6 +79,8 @@ A web application for coaching and psychological counseling.
   - [x] timezone (varchar[50])
   - [x] bio (text)
   - [x] preferred_contact (varchar[20])
+  - [x] notifications_enabled (bool)
+  - [x] avatar (ImageField)
   - [x] is_client (bool)
   - [x] is_coach (bool)
 
@@ -135,9 +138,29 @@ A web application for coaching and psychological counseling.
 - [x] MySQL Configuration
 - [x] MySQL Strict Mode
 
-### Authentication
+### Authentication and User Management
 - [x] Crispy Forms Integration
 - [x] Bootstrap 5 Integration
+- [x] User Registration System
+- [x] Profile Management
+  - [x] Profile View and Edit
+  - [x] Avatar Upload
+  - [x] Contact Preferences
+  - [x] Notification Settings
+- [x] Coach/Client Role System
+
+### UI/UX Improvements
+- [x] Responsive Navigation Bar
+- [x] Dark Green Color Scheme
+- [x] Bootstrap-based Layout
+- [x] Profile Card Design
+- [x] Consistent Footer
+- [x] Mobile-friendly Design
+
+### Admin Interface
+- [x] Enhanced Profile Management
+- [x] User Role Management (Coach/Client)
+- [x] Improved Admin Dashboard
 
 ## Git Workflow
 
@@ -227,6 +250,13 @@ LifeCoach/
 │   ├── urls.py         # Main URL configuration
 │   ├── asgi.py         # ASGI configuration
 │   └── wsgi.py         # WSGI configuration
+├── accounts/           # Account management application
+│   ├── migrations/     # Database migrations
+│   ├── templates/      # HTML templates
+│   ├── models.py       # Database models
+│   ├── views.py        # View logic
+│   ├── urls.py         # URL routing
+│   └── admin.py        # Admin interface
 ├── viewer/             # Viewer application
 │   ├── migrations/     # Database migrations
 │   ├── templates/      # HTML templates
@@ -234,10 +264,14 @@ LifeCoach/
 │   ├── views.py        # View logic
 │   ├── urls.py         # URL routing
 │   └── admin.py        # Admin interface
-├── accounts/           # Account management application
-├── manage.py           # Django project manager
-├── requirements.txt    # Dependencies list
-└── README.md          # Project documentation
+├── static/             # Static files (CSS, JS, images)
+├── templates/          # Global templates
+├── fixtures/           # Initial data fixtures
+├── files/             # Project files and documentation
+├── manage.py          # Django project manager
+├── requirements.txt   # Dependencies list
+├── .gitignore        # Git ignore rules
+└── README.md         # Project documentation
 ```
 
 ## TODO
@@ -275,11 +309,11 @@ LifeCoach/
 
 ### Running Tests
 ```bash
-python manage.py test viewer.test_views
+python manage.py test registration.test_views
 ```
 
 ### Test Coverage
 ```bash
 coverage run --omit="*/tests/*" -m pytest
 coverage html
-``` 
+```
