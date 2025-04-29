@@ -1,10 +1,18 @@
 from django.contrib.auth.forms import UserCreationForm
 from django.db.transaction import atomic
 from django.forms import CharField, PasswordInput, DateField, NumberInput, \
-    Textarea, ModelForm
+    Textarea, ModelForm, TextInput, Select, CheckboxSelectMultiple
+from django import forms
+from django.core.validators import RegexValidator
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Row, Column, Field, HTML, Div, Submit
+from crispy_forms.bootstrap import FormActions
+import re
 
-from accounts.models import Profile
-
+from accounts.models import (
+    Profile, PHONE_PREFIXES, SPECIALIZATION_CHOICES, GOALS_CHOICES,
+    MARITAL_STATUS_CHOICES, MEDICAL_CONDITIONS, REFERRAL_SOURCES
+)
 
 class SignUpForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
@@ -12,56 +20,478 @@ class SignUpForm(UserCreationForm):
                   'password1', 'password2']
 
         labels = {
-            'username': 'Username',
-            'first_name': 'First Name',
-            'last_name': 'Last Name',
-            'email': 'Email',
+            'username': 'Username *',
+            'first_name': 'First Name *',
+            'last_name': 'Last Name *',
+            'email': 'Email *',
         }
 
+        help_texts = {
+            'username': 'Allowed characters: letters, numbers and @/./+/-/_',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-lg-3'
+        self.helper.field_class = 'col-lg-9'
+        self.helper.layout = Layout(
+            # Account Information
+            HTML("<h4 class='mb-3'>Account Information</h4>"),
+            Row(
+                Column('username', css_class='col-md-6'),
+                Column('email', css_class='col-md-6'),
+                css_class='g-3'
+            ),
+            Row(
+                Column('password1', css_class='col-md-6'),
+                Column('password2', css_class='col-md-6'),
+                css_class='g-3 mt-3'
+            ),
+            HTML("<hr>"),
+
+            # Personal Information
+            HTML("<h4 class='mb-3'>Personal Information</h4>"),
+            Row(
+                Column('first_name', css_class='col-md-4'),
+                Column('middle_initial', css_class='col-md-2'),
+                Column('last_name', css_class='col-md-6'),
+                css_class='g-3'
+            ),
+            Row(
+                Column('date_of_birth', css_class='col-md-4'),
+                Column('sex', css_class='col-md-4'),
+                Column('marital_status', css_class='col-md-4'),
+                css_class='g-3 mt-3'
+            ),
+            Row(
+                Column('occupation', css_class='col-12'),
+                css_class='mt-3'
+            ),
+            HTML("<hr>"),
+
+            # Address
+            HTML("<h4 class='mb-3'>Address</h4>"),
+            Row(
+                Column('street_address', css_class='col-12'),
+                css_class='mb-3'
+            ),
+            Row(
+                Column('city', css_class='col-md-5'),
+                Column('state', css_class='col-md-4'),
+                Column('zip_code', css_class='col-md-3'),
+                css_class='g-3'
+            ),
+            HTML("<hr>"),
+
+            # Contact
+            HTML("<h4 class='mb-3'>Contact</h4>"),
+            Row(
+                Column('phone_prefix', css_class='col-md-4'),
+                Column('phone', css_class='col-md-8'),
+                css_class='g-3'
+            ),
+            HTML("<hr>"),
+
+            # Medical History
+            HTML("<h4 class='mb-3'>Medical History</h4>"),
+            Row(
+                Column(Field('emotional_treatment'), css_class='col-12'),
+                css_class='mb-2'
+            ),
+            Row(
+                Column('emotional_treatment_explanation', css_class='col-12'),
+                css_class='mb-2',
+                css_id='emotional-explanation',
+                style='display: none;'
+            ),
+            Row(
+                Column(Field('medical_conditions'), css_class='col-12'),
+                css_class='mb-4'
+            ),
+            HTML("<hr>"),
+
+            # Goals and Interests
+            HTML("<h4 class='mb-3'>Goals and Interests</h4>"),
+            Row(
+                Column('specialization', css_class='col-12'),
+                css_class='mb-3'
+            ),
+            Row(
+                Column(Field('goals'), css_class='col-12'),
+                css_class='mb-4'
+            ),
+            HTML("<hr>"),
+
+            # Consent
+            HTML("<h4 class='mb-3'>Consent</h4>"),
+            Row(
+                Column(Field('therapy_consent'), css_class='col-12'),
+                css_class='mb-4'
+            ),
+        )
+
+        # Add submit button
+        self.helper.add_input(Submit('submit', 'Create Account', css_class='btn btn-success btn-lg w-100 mt-4'))
+
+    username = CharField(
+        max_length=30,
+        required=True,
+        label='Username *',
+        validators=[
+            RegexValidator(
+                r'^[\w.@+-]+$',
+                'This value may contain only letters, numbers and @/./+/-/_ characters.'
+            ),
+        ]
+    )
+
     password1 = CharField(
-        widget=PasswordInput(attrs={'placeholder': 'Password'}),
-        label='Password'
+        widget=PasswordInput(attrs={
+            'placeholder': 'Password',
+            'class': 'form-control password-input',
+            'data-toggle': 'password'
+        }),
+        label='Password *'
     )
 
     password2 = CharField(
-        widget=PasswordInput(attrs={'placeholder': 'Password again'}),
-        label='Password again'
+        widget=PasswordInput(attrs={
+            'placeholder': 'Password again',
+            'class': 'form-control password-input',
+            'data-toggle': 'password'
+        }),
+        label='Password Again *'
+    )
+
+    # Personal Information
+    middle_initial = CharField(
+        max_length=1,
+        required=False,
+        label='Middle Initial',
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+
+    street_address = CharField(
+        max_length=255,
+        required=True,
+        label='Street Address *',
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+
+    city = CharField(
+        max_length=100,
+        required=True,
+        label='City *',
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+
+    state = CharField(
+        max_length=100,
+        required=True,
+        label='State *',
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+
+    zip_code = CharField(
+        max_length=10,
+        required=True,
+        label='ZIP Code *',
+        validators=[
+            RegexValidator(
+                r'^\d{3}\s?\d{2}$',
+                'Enter ZIP code in format XXX XX or XXXXX'
+            ),
+        ],
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'XXX XX'
+        })
+    )
+
+    # Contact Information
+    phone_prefix = forms.ChoiceField(
+        choices=PHONE_PREFIXES,
+        initial='+1',
+        label='Country Code',
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'})
     )
 
     phone = CharField(
-        label='Phone Number',
-        required=False
+        label='Mobile Phone',
+        required=False,
+        validators=[
+            RegexValidator(
+                r'^\d{9}$',
+                'Enter 9 digits of phone number without spaces or prefix'
+            ),
+        ],
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '123456789'
+        })
     )
+
+    # Additional Personal Information
+    date_of_birth = forms.DateField(
+        required=True,
+        label='Birth Date *',
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date'
+        }),
+        help_text='Format: MM/DD/YYYY'
+    )
+
+    sex = forms.ChoiceField(
+        choices=[('M', 'Male'), ('F', 'Female')],
+        required=True,
+        label='Sex *',
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    marital_status = forms.ChoiceField(
+        choices=MARITAL_STATUS_CHOICES,
+        required=False,
+        label='Marital Status',
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    occupation = CharField(
+        max_length=100,
+        required=False,
+        label='Occupation',
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+
+    # Medical History
+    emotional_treatment = forms.BooleanField(
+        required=False,
+        label='Have you ever been treated for an emotional problem?',
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
+
+    emotional_treatment_explanation = forms.CharField(
+        required=False,
+        label='If yes, please explain:',
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 2,
+            'placeholder': 'Describe your experience...'
+        })
+    )
+
+    medical_conditions = forms.MultipleChoiceField(
+        choices=MEDICAL_CONDITIONS,
+        required=False,
+        label='Have you ever been treated for:',
+        widget=forms.CheckboxSelectMultiple(attrs={
+            'class': 'medical-conditions-group list-unstyled'
+        })
+    )
+
+    # Goals and Interests
+    specialization = forms.ChoiceField(
+        choices=[('', '-- Select Area of Focus --')] + list(SPECIALIZATION_CHOICES),
+        required=False,
+        label='Area of Focus',
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    goals = forms.MultipleChoiceField(
+        choices=GOALS_CHOICES,
+        required=False,
+        label='Goals',
+        widget=forms.CheckboxSelectMultiple(attrs={
+            'class': 'goals-checkbox-group list-unstyled'
+        })
+    )
+
+    fears_phobias = forms.CharField(
+        required=False,
+        label='Do you have any fears or phobias?',
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 2,
+            'placeholder': 'Describe your fears or phobias...'
+        })
+    )
+
+    # Referral Information
+    referral_source = forms.MultipleChoiceField(
+        choices=REFERRAL_SOURCES,
+        required=False,
+        label='How did you hear about us?',
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'referral-checkbox-group'})
+    )
+
+    referral_source_other = forms.CharField(
+        required=False,
+        label='Other referral source:',
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+
+    # Consent
+    therapy_consent = forms.BooleanField(
+        required=True,
+        label='I understand and agree to the terms *',
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
+
+    def clean_zip_code(self):
+        zip_code = self.cleaned_data.get('zip_code')
+        if zip_code:
+            # Remove spaces and check format
+            zip_code = ''.join(zip_code.split())
+            if not re.match(r'^\d{5}$', zip_code):
+                raise forms.ValidationError('Enter ZIP code in format XXX XX or XXXXX')
+            # Format as XXX XX
+            return f'{zip_code[:3]} {zip_code[3:]}'
+        return zip_code
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if phone:
+            # Remove spaces and other characters
+            phone = ''.join(filter(str.isdigit, phone))
+            if len(phone) != 9:
+                raise forms.ValidationError('Phone number must have 9 digits')
+        return phone
 
     @atomic
     def save(self, commit=True):
         self.instance.is_active = True
         user = super().save(commit)
 
-        date_of_birth = self.cleaned_data.get('date_of_birth')
-        biography = self.cleaned_data.get('biography')
-        phone = self.cleaned_data.get('phone')
+        # Create profile with all the form data
         profile = Profile(
             user=user,
-            date_of_birth=date_of_birth,
-            biography=biography,
-            phone=phone
+            middle_initial=self.cleaned_data.get('middle_initial'),
+            street_address=self.cleaned_data.get('street_address'),
+            city=self.cleaned_data.get('city'),
+            state=self.cleaned_data.get('state'),
+            zip_code=self.cleaned_data.get('zip_code'),
+            date_of_birth=self.cleaned_data.get('date_of_birth'),
+            sex=self.cleaned_data.get('sex'),
+            marital_status=self.cleaned_data.get('marital_status'),
+            occupation=self.cleaned_data.get('occupation'),
+            
+            # Contact Information
+            phone=f"{self.cleaned_data.get('phone_prefix')}{self.cleaned_data.get('phone')}",
+            
+            # Medical History
+            emotional_treatment_history=self.cleaned_data.get('emotional_treatment_explanation') if self.cleaned_data.get('emotional_treatment') else None,
+            medical_conditions=self.cleaned_data.get('medical_conditions', []),
+            
+            # Goals and Interests
+            specialization=self.cleaned_data.get('specialization'),
+            goals=','.join(self.cleaned_data.get('goals', [])),
+            fears_phobias=self.cleaned_data.get('fears_phobias'),
+            
+            # Referral Information
+            referral_source=','.join(self.cleaned_data.get('referral_source', [])),
+            referral_source_other=self.cleaned_data.get('referral_source_other'),
+            
+            # Consent
+            therapy_consent=self.cleaned_data.get('therapy_consent', False),
+            
+            # Set default values
+            is_coach=False,
+            is_client=True
         )
+
+        # Generate bio if specialization or goals are set
+        if profile.specialization or profile.goals:
+            profile.bio = profile.generate_bio()
+
         if commit:
             profile.save()
         return user
 
 
 class ProfileUpdateForm(ModelForm):
+    phone_prefix = forms.ChoiceField(
+        choices=PHONE_PREFIXES,
+        initial='+1',
+        label='Country Code'
+    )
+
+    specialization = forms.ChoiceField(
+        choices=[('', '-- Select Specialization --')] + list(SPECIALIZATION_CHOICES),
+        required=False,
+        label='Specialization',
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    goals = forms.MultipleChoiceField(
+        choices=GOALS_CHOICES,
+        required=False,
+        label='Goals',
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'goals-checkbox-group'})
+    )
+
     class Meta:
         model = Profile
-        fields = ['phone', 'timezone', 'bio', 'preferred_contact']
+        fields = ['phone_prefix', 'phone', 'timezone', 'specialization', 'goals', 'bio', 
+                 'preferred_contact', 'notifications_enabled', 'avatar']
         labels = {
             'phone': 'Phone Number',
             'timezone': 'Time Zone',
-            'bio': 'Biography',
-            'preferred_contact': 'Preferred Contact Method'
+            'preferred_contact': 'Preferred Contact Method',
+            'notifications_enabled': 'Enable Notifications',
+            'avatar': 'Profile Picture',
+            'bio': 'Biography'
         }
         widgets = {
-            'bio': Textarea(attrs={'rows': 4}),
+            'bio': Textarea(attrs={'rows': 4, 'class': 'form-control'}),
+            'phone': TextInput(attrs={'placeholder': '123456789', 'class': 'form-control'}),
+            'timezone': Select(attrs={'class': 'form-select'}),
+            'preferred_contact': Select(attrs={'class': 'form-select'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.phone:
+            # Split phone number into prefix and number
+            for prefix, _ in PHONE_PREFIXES:
+                if self.instance.phone.startswith(prefix):
+                    self.initial['phone_prefix'] = prefix
+                    self.initial['phone'] = self.instance.phone[len(prefix):]
+                    break
+        
+        # Set initial goals from comma-separated string
+        if self.instance and self.instance.goals:
+            self.initial['goals'] = self.instance.get_goals_list()
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if phone:
+            # Remove spaces and dashes
+            phone = ''.join(filter(str.isdigit, phone))
+            if len(phone) < 9:
+                raise forms.ValidationError('Phone number must have at least 9 digits.')
+        return phone
+
+    def clean(self):
+        cleaned_data = super().clean()
+        phone = cleaned_data.get('phone')
+        prefix = cleaned_data.get('phone_prefix')
+        goals = cleaned_data.get('goals', [])
+        
+        if phone and prefix:
+            # Combine prefix and number
+            cleaned_data['phone'] = f"{prefix}{phone}"
+        
+        # Convert goals list to comma-separated string
+        if goals:
+            cleaned_data['goals'] = ','.join(goals)
+        
+        # Generate bio if specialization or goals changed
+        if 'specialization' in self.changed_data or 'goals' in self.changed_data:
+            self.instance.specialization = cleaned_data.get('specialization')
+            self.instance.goals = cleaned_data.get('goals')
+            cleaned_data['bio'] = self.instance.generate_bio()
+        
+        return cleaned_data

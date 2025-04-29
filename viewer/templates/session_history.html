@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Session History{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Session History</h1>
+
+    <!-- Upcoming Sessions -->
+    <h2 class="mb-3">Upcoming Sessions</h2>
+    <div class="row mb-5">
+        {% for session in upcoming_sessions %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ session.service.name }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">
+                            {{ session.date_time|date:"F j, Y" }} at {{ session.date_time|date:"g:i A" }}
+                        </h6>
+                        <p class="card-text">
+                            <strong>Type:</strong> {{ session.get_type_display }}<br>
+                            <strong>Duration:</strong> {{ session.duration }} minutes<br>
+                            {% if user.profile.is_coach %}
+                                <strong>Client:</strong> {{ session.client.user.get_full_name }}
+                            {% else %}
+                                <strong>Coach:</strong> {{ session.coach.user.get_full_name }}
+                            {% endif %}
+                        </p>
+                        <div class="mt-3">
+                            {% if session.can_cancel %}
+                                <form method="post" action="{% url 'viewer:cancel-session' session.id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm">Cancel Session</button>
+                                </form>
+                            {% endif %}
+                            <a href="{% url 'viewer:session-detail' session.id %}" class="btn btn-outline-primary btn-sm">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col">
+                <p>No upcoming sessions.</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Past Sessions -->
+    <h2 class="mb-3">Past Sessions</h2>
+    <div class="row">
+        {% for session in past_sessions %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ session.service.name }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">
+                            {{ session.date_time|date:"F j, Y" }} at {{ session.date_time|date:"g:i A" }}
+                        </h6>
+                        <p class="card-text">
+                            <strong>Type:</strong> {{ session.get_type_display }}<br>
+                            <strong>Duration:</strong> {{ session.duration }} minutes<br>
+                            {% if user.profile.is_coach %}
+                                <strong>Client:</strong> {{ session.client.user.get_full_name }}
+                            {% else %}
+                                <strong>Coach:</strong> {{ session.coach.user.get_full_name }}
+                            {% endif %}
+                        </p>
+                        <div class="mt-3">
+                            <a href="{% url 'viewer:session-detail' session.id %}" class="btn btn-outline-primary btn-sm">View Details</a>
+                            {% if not session.has_review and not user.profile.is_coach %}
+                                <a href="{% url 'viewer:create-review' session.id %}" class="btn btn-success btn-sm">Leave Review</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col">
+                <p>No past sessions.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

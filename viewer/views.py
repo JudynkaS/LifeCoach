@@ -1,37 +1,15 @@
-from django.contrib.auth import login
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.views.generic import TemplateView, CreateView, ListView, DetailView, UpdateView, DeleteView
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.utils import timezone
 from django.db.models import Q
 
-from accounts.forms import SignUpForm
 from .models import Session, Service
 from .forms import ServiceForm
 
 class HomeView(TemplateView):
-    template_name = "viewer/home.html"
-
-
-class RegisterView(CreateView):
-    form_class = SignUpForm
-    template_name = 'accounts/register.html'
-
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        login(self.request, self.object)  # automatické přihlášení po registraci
-        return response
-
-    def get_success_url(self):
-        if self.object.is_coach:
-            return reverse('coach_dashboard')
-        return reverse('client_dashboard')
-
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            return redirect('dashboard')  # nebo jiná logika
-        return super().dispatch(request, *args, **kwargs)
+    template_name = 'home.html'
 
 
 class SessionHistoryView(LoginRequiredMixin, ListView):
@@ -169,3 +147,6 @@ class ServiceDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def test_func(self):
         service = self.get_object()
         return self.request.user == service.coach
+
+def home(request):
+    return render(request, 'home.html')

@@ -1,24 +1,35 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}Welcome to LifeCoach{% endblock %}
+{% block title %}Welcome - LifeCoach{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="welcome-section card border-0 bg-transparent">
-        <h1 class="display-4">Welcome to LifeCoach</h1>
-        <p class="lead text-dark">Your personal coaching and psychological counseling platform.</p>
-        <hr class="my-4">
-        <p class="text-dark">Start your journey to personal growth and well-being today.</p>
-        {% if not user.is_authenticated %}
-            <div class="mt-4">
-                <a class="btn btn-primary btn-lg" href="{% url 'accounts:login' %}" role="button">Get Started</a>
-            </div>
-        {% else %}
-            <div class="mt-4">
-                <a class="btn btn-primary btn-lg" href="{% url 'accounts:profile' %}" role="button">View Profile</a>
-            </div>
-        {% endif %}
+<div class="welcome-section text-center">
+    <h1>Welcome to LifeCoach</h1>
+    <p class="lead">Your personal coaching and psychological counseling platform.</p>
+    
+    <hr>
+    
+    <p>Start your journey to personal growth and well-being today.</p>
+    
+    {% if not user.is_authenticated %}
+        <a href="{% url 'accounts:register' %}" class="btn btn-success">Get Started</a>
+    {% endif %}
+</div>
+
+<div class="cards-container">
+    <div class="card">
+        <h2>Personal Sessions</h2>
+        <p>Experience one-on-one coaching sessions tailored to your individual needs and goals.</p>
+    </div>
+    
+    <div class="card">
+        <h2>Online Coaching</h2>
+        <p>Connect from anywhere with convenient online coaching sessions that fit your schedule.</p>
+    </div>
+    
+    <div class="card">
+        <h2>Your Progress</h2>
+        <p>Track your development and celebrate achievements as you work towards your goals.</p>
     </div>
 </div>
 {% endblock %} 

@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - LifeCoach{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="text-center mb-5">
+                <div class="mb-4">
+                    {% if profile.avatar %}
+                        <img src="{{ profile.avatar.url }}" alt="Profile Picture" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center" style="width: 150px; height: 150px;">
+                            <i class="fas fa-user fa-4x text-secondary"></i>
+                        </div>
+                    {% endif %}
+                </div>
+                <h1 class="h2 mb-4">Welcome, {{ user.get_full_name|default:user.username }}!</h1>
+            </div>
+
+            <div class="profile-details">
+                <div class="row mb-3 align-items-center">
+                    <div class="col-4 text-muted">Username</div>
+                    <div class="col-8">{{ user.username }}</div>
+                </div>
+
+                <div class="row mb-3 align-items-center">
+                    <div class="col-4 text-muted">Email</div>
+                    <div class="col-8">{{ user.email }}</div>
+                </div>
+
+                {% if profile.phone %}
+                <div class="row mb-3 align-items-center">
+                    <div class="col-4 text-muted">Phone</div>
+                    <div class="col-8">{{ profile.phone }}</div>
+                </div>
+                {% endif %}
+
+                <div class="row mb-3 align-items-center">
+                    <div class="col-4 text-muted">Role</div>
+                    <div class="col-8">
+                        {% if profile.is_coach %}Coach{% endif %}
+                        {% if profile.is_client %}Client{% endif %}
+                    </div>
+                </div>
+
+                {% if profile.timezone %}
+                <div class="row mb-3 align-items-center">
+                    <div class="col-4 text-muted">Time Zone</div>
+                    <div class="col-8">{{ profile.timezone }}</div>
+                </div>
+                {% endif %}
+
+                {% if profile.preferred_contact %}
+                <div class="row mb-3 align-items-center">
+                    <div class="col-4 text-muted">Preferred Contact</div>
+                    <div class="col-8">{{ profile.get_preferred_contact_display }}</div>
+                </div>
+                {% endif %}
+
+                {% if profile.bio %}
+                <div class="row mb-3 align-items-center">
+                    <div class="col-4 text-muted">Bio</div>
+                    <div class="col-8">{{ profile.bio }}</div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="text-center mt-5">
+                <a href="{% url 'accounts:profile_edit' %}" class="btn btn-success px-4">
+                    <i class="fas fa-edit me-2"></i>Edit Profile
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.profile-details {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-success {
+    background-color: #82c91e;
+    border-color: #82c91e;
+}
+
+.btn-success:hover {
+    background-color: #74b816;
+    border-color: #74b816;
+}
+</style>
+{% endblock %} 

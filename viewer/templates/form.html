@@ -1,14 +1,27 @@
 {% extends "base.html" %}
-{% load crispy_forms_tags %}
 
 {% block title %}
     Form
 {% endblock %}
 
 {% block content %}
-    <form method="post">
+    {% comment %}<form method="post">
         {% csrf_token %}
-        {{ form|crispy }}
+        <table>{{ form.as_table }}</table>
         <input type="submit" id="id_submit" value="Save" class="btn btn-primary">
     </form>
+    <hr>{% endcomment %}
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" id="id_submit" value="Save" class="btn btn-primary">
+    </form>
+    {% comment %}<hr>
+    <form method="post">
+        {% csrf_token %}
+        <ul>
+            {{ form.as_ul }}
+        </ul>
+        <input type="submit" id="id_submit" value="Save" class="btn btn-primary">
+    </form>{% endcomment %}
 {% endblock %} 

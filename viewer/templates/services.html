@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Our Services{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Our Services</h1>
+
+    {% if user.profile.is_coach %}
+        <div class="mb-4">
+            <a href="{% url 'viewer:service-create' %}" class="btn btn-primary">Add New Service</a>
+        </div>
+    {% endif %}
+
+    <div class="row">
+        {% for service in services %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ service.name }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">{{ service.price }} {{ service.currency }}</h6>
+                        <p class="card-text">{{ service.description }}</p>
+                        <p class="card-text"><small class="text-muted">Duration: {{ service.duration }} minutes</small></p>
+                        
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'viewer:book-session' service.id %}" class="btn btn-primary">Book Now</a>
+                            {% if user.profile.is_coach and user == service.coach %}
+                                <a href="{% url 'viewer:service-update' service.id %}" class="btn btn-outline-secondary">Edit</a>
+                            {% endif %}
+                        {% else %}
+                            <a href="{% url 'login' %}" class="btn btn-primary">Login to Book</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col">
+                <p>No services available at the moment.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

@@ -22,14 +22,7 @@ from LifeCoach import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    
-    # Include app URLs
-    path('accounts/', include('accounts.urls')),
-    path('', include('viewer.urls')),
-    
-    # Include Django auth URLs
-    path('accounts/', include('django.contrib.auth.urls')),
+    path('accounts/', include('accounts.urls', namespace='accounts')),
+    path('', include('viewer.urls', namespace='viewer')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-
-
+ 
