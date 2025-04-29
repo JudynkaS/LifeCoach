@@ -43,7 +43,7 @@ class Service(models.Model):
     is_active = BooleanField(default=True)
     currency = CharField(max_length=3, default='USD')
     coach = ForeignKey(settings.AUTH_USER_MODEL, on_delete=CASCADE, related_name='services')
-    session_type = ForeignKey(SessionType, on_delete=CASCADE, related_name='services')
+    session_type = ForeignKey('viewer.SessionType', on_delete=CASCADE, related_name='services')
     created = DateTimeField(auto_now_add=True)
     updated = DateTimeField(auto_now=True)
 
@@ -65,7 +65,7 @@ class Session(models.Model):
 
     client = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='client_sessions')
     coach = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='coach_sessions')
-    service = models.ForeignKey(Service, on_delete=models.CASCADE)
+    service = models.ForeignKey('viewer.Service', on_delete=models.CASCADE)
     date_time = models.DateTimeField()
     duration = models.IntegerField(default=60)  # default duration 60 minutes
     type = models.CharField(max_length=10, choices=SESSION_TYPES, default='online')  # default to online sessions
@@ -93,9 +93,9 @@ class Session(models.Model):
 
 
 class Payment(models.Model):
-    session = ForeignKey(Session, on_delete=CASCADE, related_name='payments')
+    session = ForeignKey('viewer.Session', on_delete=CASCADE, related_name='payments')
     amount = DecimalField(max_digits=10, decimal_places=2)
-    payment_method = ForeignKey(PaymentMethod, on_delete=CASCADE, related_name='payments')
+    payment_method = models.ForeignKey('viewer.PaymentMethod', on_delete=models.CASCADE)
     paid_at = DateTimeField(null=True, blank=True)
     created = DateTimeField(auto_now_add=True)
     updated = DateTimeField(auto_now=True)
@@ -105,7 +105,7 @@ class Payment(models.Model):
 
 
 class Review(models.Model):
-    session = ForeignKey(Session, on_delete=CASCADE, related_name='reviews')
+    session = ForeignKey('viewer.Session', on_delete=CASCADE, related_name='reviews')
     rating = models.IntegerField()
     comment = TextField(null=True, blank=True)
     created = DateTimeField(auto_now_add=True)
