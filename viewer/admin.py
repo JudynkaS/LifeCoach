@@ -1,8 +1,9 @@
 from django.contrib import admin
-from .models import (
-    SessionType, SessionStatus, PaymentMethod,
-    Service, Session, Payment, Review
+from .models import (SessionType, SessionStatus, PaymentMethod,Session, Payment, Review
 )
+from .models import Category, Service
+
+admin.site.register(Category)
 
 @admin.register(SessionType)
 class SessionTypeAdmin(admin.ModelAdmin):

@@ -3,6 +3,9 @@ from django.db.models import CASCADE, CharField, DateTimeField, TextField, Decim
 from django.utils import timezone
 from django.conf import settings
 from accounts.models import Profile
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import CreateView
+from django.urls import reverse_lazy
 
 
 class SessionType(models.Model):
@@ -42,6 +45,7 @@ class Service(models.Model):
     duration = models.IntegerField()  # in minutes
     is_active = BooleanField(default=True)
     currency = CharField(max_length=3, default='USD')
+    category = models.ForeignKey('Category', on_delete=models.CASCADE, related_name='services', null=True, blank=True)
     coach = ForeignKey(settings.AUTH_USER_MODEL, on_delete=CASCADE, related_name='services')
     session_type = ForeignKey('viewer.SessionType', on_delete=CASCADE, related_name='services')
     created = DateTimeField(auto_now_add=True)
@@ -113,3 +117,14 @@ class Review(models.Model):
 
     def __str__(self):
         return f"Review for {self.session}"
+
+class Category(models.Model):
+    name = models.CharField(max_length=100)
+
+    class Meta:
+        verbose_name = "Category"
+        verbose_name_plural = "Categories"
+
+    def __str__(self):
+        return self.name
+
