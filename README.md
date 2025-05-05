@@ -12,20 +12,20 @@ A web application for coaching and psychological counseling.
     - [x] Contact preferences
     - [x] Timezone settings
     - [x] Notification settings
-  - [ ] Session History
-    - [ ] View past sessions
-    - [ ] Session details
-    - [ ] Payment history
+  - [x] Session History
+    - [x] View past sessions
+    - [x] Session details
+    - [x] Payment history
 
-- [ ] 2 Booking system (`feature/booking-system`)
-  - [ ] Ability to book appointments (US time, EU) (`feature/appointment-booking`)
-    - [ ] Personal or online session
-    - [ ] Time slot selection
-    - [ ] Service selection
-  - [ ] View available slots (`feature/timezone-management`)
-  - [ ] Cancel or reschedule sessions (`feature/session-cancellation`)
-    - [ ] More than 24 hours in advance – allowed
-    - [ ] Less than 24 hours – admin only
+- [x] 2 Booking system (`feature/booking-system`)
+  - [x] Ability to book appointments (US time, EU) (`feature/appointment-booking`)
+    - [x] Personal or online session
+    - [x] Time slot selection
+    - [x] Service selection
+  - [x] View available slots (`feature/timezone-management`)
+  - [x] Cancel or reschedule sessions (`feature/session-cancellation`)
+    - [x] More than 24 hours in advance – allowed
+    - [x] Less than 24 hours – admin only
 
 - [ ] 3 List of Services and Prices (`feature/services-prices`)
   - [ ] Service model implementation
@@ -55,6 +55,13 @@ A web application for coaching and psychological counseling.
   - [ ] Booking reports
   - [ ] Payment overviews
   - [ ] Client engagement analytics
+
+- [x] Google Calendar integrace
+- [x] Booking pouze na volné sloty
+- [x] Validace překrývání rezervací
+- [x] Přesun client_secret.json do správné složky
+- [x] Oprava importů v BookingForm
+- [x] Uložení a push na GitHub
 
 ## Database Structure
 
