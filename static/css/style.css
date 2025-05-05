@@ -1,9 +1,11 @@
 :root {
     /* Primární zelené tóny */
-    --primary-green: #6ABF69;
-    --primary-green-light: #E0F2E0;
-    --primary-green-dark: #4C9A4C;
-    --secondary-yellow: #E9C46A;
+    --primary-green: #6ABF69; /* Klidná, harmonická zelená */
+    --primary-green-light: #E0F2E0; /* Pastelová zelená pro pozadí */
+    --primary-green-dark: #4C9A4C; /* Hlubší zelená pro CTA hover */
+
+    /* Sekundární barvy */
+    --secondary-yellow: #E9C46A; /* Jemné zvýraznění */
     --neutral-white: #FFFFFF;
     --neutral-gray: #F5F5F5;
     --text-dark: #2D2D2D;
@@ -21,32 +23,32 @@ body {
 
 /* Navbar styles */
 .navbar {
-    background-color: var(--primary-green);
+    background-color: var(--primary-green) !important;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     padding: 1rem 2rem;
 }
 
 .navbar-brand {
-    color: var(--neutral-white);
+    color: var(--neutral-white) !important;
     font-weight: 600;
     font-size: 1.5rem;
 }
 
 .navbar-brand:hover {
-    color: var(--primary-green-light);
+    color: var(--primary-green-light) !important;
 }
 
 .nav-link {
-    color: var(--neutral-white);
+    color: var(--neutral-white) !important;
     margin: 0 0.5rem;
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 1rem !important;
     border-radius: 8px;
     transition: all 0.3s ease;
 }
 
 .nav-link:hover {
     background-color: var(--primary-green-dark);
-    color: var(--neutral-white);
+    color: var(--neutral-white) !important;
 }
 
 /* Welcome section */
@@ -71,6 +73,36 @@ body {
 }
 
 /* Cards */
+.card {
+    background: var(--neutral-white);
+    border: 1px solid var(--border-gray);
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    margin-bottom: 2rem;
+    padding: 2rem;
+    height: 250px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.card h2 {
+    color: var(--primary-green);
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+.card p {
+    color: var(--text-dark);
+    margin-bottom: 0;
+    max-width: 300px;
+    line-height: 1.6;
+}
+
+/* Add container for cards */
 .cards-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -80,120 +112,21 @@ body {
     margin: 0 auto;
 }
 
-.cards-container .card {
-    background: var(--neutral-white);
-    border: 1px solid var(--border-gray);
-    border-radius: 15px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    padding: 2rem;
-    text-align: center;
-    height: auto;
-    min-height: 250px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.cards-container .card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-}
-
-.cards-container .card h2 {
-    color: var(--primary-green);
-    font-size: 1.75rem;
-    margin-bottom: 1rem;
-    font-weight: 600;
-}
-
-.cards-container .card p {
-    color: var(--text-dark);
-    margin: 0;
-    line-height: 1.6;
-    max-width: 280px;
-}
-
-.cards-container .card i {
-    font-size: 2.5rem;
-    color: var(--primary-green);
-    margin-bottom: 1.5rem;
-}
-
-/* Forms */
-.form-control, .form-select {
-    border-color: var(--border-gray);
-    transition: all 0.3s ease;
-    padding: 0.75rem;
-    border-radius: 0.5rem;
-}
-
-.form-control:focus, .form-select:focus {
-    border-color: var(--primary-green);
-    box-shadow: 0 0 0 0.2rem rgba(106, 191, 105, 0.15);
-}
-
-.form-label {
-    font-weight: 600;
-    color: var(--text-dark);
-    margin-bottom: 0.5rem;
-}
-
 /* Buttons */
-.btn-primary {
-    background-color: var(--primary-green);
-    border: none;
-    color: white;
+.btn-primary, .btn-success {
+    background-color: var(--primary-green) !important;
+    border: none !important;
+    color: white !important;
     padding: 0.8rem 1.4rem;
     border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.2rem;
     transition: all 0.3s ease;
 }
 
-.btn-primary:hover {
-    background-color: var(--primary-green-dark);
+.btn-primary:hover, .btn-success:hover {
+    background-color: var(--primary-green-dark) !important;
     transform: translateY(-1px);
-}
-
-.btn-outline-secondary {
-    color: var(--text-dark);
-    border-color: var(--border-gray);
-}
-
-.btn-outline-secondary:hover {
-    background-color: var(--neutral-gray);
-    color: var(--text-dark);
-}
-
-/* Profile Edit Specific */
-.profile-edit .card {
-    height: auto;
-    padding: 1.5rem;
-}
-
-.profile-edit .form-check {
-    margin-bottom: 1rem;
-}
-
-.profile-edit .goals-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1rem;
-}
-
-.profile-edit .goals-checkbox-group {
-    display: contents;
-}
-
-.profile-edit .goals-checkbox-group div {
-    background: white;
-    padding: 0.75rem;
-    border-radius: 0.5rem;
-    border: 1px solid var(--border-gray);
-}
-
-.profile-edit .goals-checkbox-group div:hover {
-    background: var(--neutral-gray);
 }
 
 /* Footer */
@@ -212,9 +145,20 @@ main {
     padding: 2rem 0;
 }
 
+/* Forms */
+.form-control {
+    border-color: var(--border-gray);
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: var(--primary-green) !important;
+    box-shadow: 0 0 0 0.2rem rgba(106, 191, 105, 0.15) !important;
+}
+
 /* Alerts */
 .alert-success {
-    background-color: var(--primary-green-light);
-    border-color: var(--primary-green);
-    color: var(--primary-green-dark);
+    background-color: var(--primary-green-light) !important;
+    border-color: var(--primary-green) !important;
+    color: var(--primary-green-dark) !important;
 } 

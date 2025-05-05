@@ -61,12 +61,12 @@ REFERRAL_SOURCES = [
     ('newspaper', 'Newspaper'),
     ('radio', 'Radio'),
     ('television', 'Television'),
-    ('other', 'Other (please specify)')
+    ('phone_book', 'Phone Book'),
+    ('other', 'Other'),
 ]
 
 class Profile(Model):
     user = OneToOneField(User, on_delete=CASCADE)
-    preferred_name = models.CharField(max_length=100, blank=True, null=True, verbose_name='Preferred Name')
     date_of_birth = DateField(null=True, blank=True)
     phone = TextField(null=True, blank=True)
     bio = TextField(null=True, blank=True)

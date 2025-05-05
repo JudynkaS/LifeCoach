@@ -7,32 +7,27 @@
     <h1>Welcome to LifeCoach</h1>
     <p class="lead">Your personal coaching and psychological counseling platform.</p>
     
-    <hr class="my-4">
+    <hr>
     
     <p>Start your journey to personal growth and well-being today.</p>
     
     {% if not user.is_authenticated %}
-        <a href="{% url 'accounts:register' %}" class="btn btn-success btn-lg">
-            <i class="fas fa-user-plus me-2"></i>Get Started
-        </a>
+        <a href="{% url 'accounts:register' %}" class="btn btn-success">Get Started</a>
     {% endif %}
 </div>
 
 <div class="cards-container">
     <div class="card">
-        <i class="fas fa-users"></i>
         <h2>Personal Sessions</h2>
         <p>Experience one-on-one coaching sessions tailored to your individual needs and goals.</p>
     </div>
     
     <div class="card">
-        <i class="fas fa-video"></i>
         <h2>Online Coaching</h2>
         <p>Connect from anywhere with convenient online coaching sessions that fit your schedule.</p>
     </div>
     
     <div class="card">
-        <i class="fas fa-chart-line"></i>
         <h2>Your Progress</h2>
         <p>Track your development and celebrate achievements as you work towards your goals.</p>
     </div>

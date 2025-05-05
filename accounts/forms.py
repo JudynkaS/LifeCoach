@@ -55,8 +55,8 @@ class SignUpForm(UserCreationForm):
             HTML("<h4 class='mb-3'>Personal Information</h4>"),
             Row(
                 Column('first_name', css_class='col-md-4'),
-                Column('preferred_name', css_class='col-md-4'),
-                Column('last_name', css_class='col-md-4'),
+                Column('middle_initial', css_class='col-md-2'),
+                Column('last_name', css_class='col-md-6'),
                 css_class='g-3'
             ),
             Row(
@@ -124,54 +124,16 @@ class SignUpForm(UserCreationForm):
             ),
             HTML("<hr>"),
 
-            # Referral Information
-            HTML("<h4 class='mb-3'>How did you hear about us?</h4>"),
+            # Consent
+            HTML("<h4 class='mb-3'>Consent</h4>"),
             Row(
-                Column(
-                    Field('referral_source', wrapper_class='referral-options'),
-                    Field('referral_source_other', wrapper_class='mt-3'),
-                    css_class='col-12'
-                ),
-                css_class='g-3'
+                Column(Field('therapy_consent'), css_class='col-12'),
+                css_class='mb-4'
             ),
-            HTML("<hr>"),
-
-            # Terms and Conditions with checkbox
-            HTML("<h4 class='mb-3'>Terms and Conditions</h4>"),
-            Row(
-                Column(
-                    Field('therapy_consent'),
-                    css_class='col-12'
-                ),
-                css_class='g-3'
-            ),
-
-            # Preferred Name
-            HTML("<h4 class='mb-3'>Additional Information</h4>"),
-            Row(
-                Column(
-                    Field('preferred_name'),
-                    css_class='col-12'
-                ),
-                css_class='g-3'
-            ),
-
-            # Submit Button
-            Row(
-                Column(
-                    Submit('submit', 'Create Account', css_class='btn btn-success btn-lg w-100 mt-4'),
-                    css_class='col-12'
-                ),
-                css_class='mt-4'
-            )
         )
 
-        # Add custom CSS for styling
-        self.helper.form_class = 'signup-form'
-        self.helper.attrs = {
-            'novalidate': '',
-            'class': 'needs-validation'
-        }
+        # Add submit button
+        self.helper.add_input(Submit('submit', 'Create Account', css_class='btn btn-success btn-lg w-100 mt-4'))
 
     username = CharField(
         max_length=30,
@@ -203,11 +165,11 @@ class SignUpForm(UserCreationForm):
         label='Password Again *'
     )
 
-    # Add new field for preferred name
-    preferred_name = CharField(
-        max_length=100,
+    # Personal Information
+    middle_initial = CharField(
+        max_length=1,
         required=False,
-        label='Name I like to be called',
+        label='Middle Initial',
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
 
@@ -359,14 +321,7 @@ class SignUpForm(UserCreationForm):
 
     # Referral Information
     referral_source = forms.MultipleChoiceField(
-        choices=[
-            ('medical_referral', 'Medical Referral'),
-            ('relative', 'Relative'),
-            ('friend', 'Friend'),
-            ('newspaper', 'Newspaper'),
-            ('radio', 'Radio'),
-            ('television', 'Television')
-        ],
+        choices=REFERRAL_SOURCES,
         required=False,
         label='How did you hear about us?',
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'referral-checkbox-group'})
@@ -374,21 +329,16 @@ class SignUpForm(UserCreationForm):
 
     referral_source_other = forms.CharField(
         required=False,
-        label='Other referral source',
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Please specify other source'
-        })
+        label='Other referral source:',
+        widget=forms.TextInput(attrs={'class': 'form-control'})
     )
 
     # Consent
     therapy_consent = forms.BooleanField(
         required=True,
-        help_text="""I am willing to be guided through relaxation, visual imagery, creative visualization, hypnosis, and stress reduction processes and techniques for the purpose of vocational or a vocational self-improvement.""",
         label='I understand and agree to the terms *',
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
     )
-
 
     def clean_zip_code(self):
         zip_code = self.cleaned_data.get('zip_code')
@@ -418,7 +368,6 @@ class SignUpForm(UserCreationForm):
         # Create profile with all the form data
         profile = Profile(
             user=user,
-            preferred_name=self.cleaned_data.get('preferred_name'),
             middle_initial=self.cleaned_data.get('middle_initial'),
             street_address=self.cleaned_data.get('street_address'),
             city=self.cleaned_data.get('city'),
@@ -461,28 +410,8 @@ class SignUpForm(UserCreationForm):
             profile.save()
         return user
 
-    class Media:
-        css = {
-            'all': ('css/signup.css',)
-        }
-        js = ('js/signup.js',)
-
 
 class ProfileUpdateForm(ModelForm):
-    first_name = forms.CharField(
-        max_length=150,
-        required=False,
-        label='First Name',
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    
-    last_name = forms.CharField(
-        max_length=150,
-        required=False,
-        label='Last Name',
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-
     phone_prefix = forms.ChoiceField(
         choices=PHONE_PREFIXES,
         initial='+1',
@@ -505,8 +434,8 @@ class ProfileUpdateForm(ModelForm):
 
     class Meta:
         model = Profile
-        fields = ['first_name', 'last_name', 'phone_prefix', 'phone', 'timezone', 'specialization', 
-                 'goals', 'bio', 'preferred_contact', 'notifications_enabled', 'avatar']
+        fields = ['phone_prefix', 'phone', 'timezone', 'specialization', 'goals', 'bio', 
+                 'preferred_contact', 'notifications_enabled', 'avatar']
         labels = {
             'phone': 'Phone Number',
             'timezone': 'Time Zone',
@@ -524,9 +453,6 @@ class ProfileUpdateForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance and self.instance.user:
-            self.initial['first_name'] = self.instance.user.first_name
-            self.initial['last_name'] = self.instance.user.last_name
         if self.instance and self.instance.phone:
             # Split phone number into prefix and number
             for prefix, _ in PHONE_PREFIXES:
@@ -569,15 +495,3 @@ class ProfileUpdateForm(ModelForm):
             cleaned_data['bio'] = self.instance.generate_bio()
         
         return cleaned_data
-
-    def save(self, commit=True):
-        profile = super().save(commit=False)
-        # Update user's first and last name
-        if self.cleaned_data.get('first_name') or self.cleaned_data.get('last_name'):
-            user = profile.user
-            user.first_name = self.cleaned_data.get('first_name', '')
-            user.last_name = self.cleaned_data.get('last_name', '')
-            user.save()
-        if commit:
-            profile.save()
-        return profile

@@ -3,12 +3,19 @@ from django.views.generic import TemplateView, CreateView, ListView, DetailView,
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.utils import timezone
+<<<<<<< HEAD
 from django.contrib import messages
 from django.contrib.auth.models import User
 
 from .models import Session, Service, Profile, Review
 from .forms import ServiceForm, BookingForm
 from .utils.google_calendar import create_psychology_session
+=======
+from django.db.models import Q
+
+from .models import Session, Service
+from .forms import ServiceForm
+>>>>>>> master
 
 class HomeView(TemplateView):
     template_name = 'home.html'
@@ -186,6 +193,7 @@ class ServiceDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         service = self.get_object()
         return self.request.user == service.coach
 
+<<<<<<< HEAD
 
 class BookingCreateView(LoginRequiredMixin, CreateView):
     model = Session
@@ -270,5 +278,7 @@ class SessionCancelView(LoginRequiredMixin, UserPassesTestMixin, View):
             messages.error(request, 'Cannot cancel session less than 24 hours before start time.')
         return redirect('viewer:session_detail', pk=session.pk)
 
+=======
+>>>>>>> master
 def home(request):
     return render(request, 'home.html')

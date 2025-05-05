@@ -1,8 +1,12 @@
 from django import forms
+<<<<<<< HEAD
 from django.utils import timezone
 from .models import Service, Session, Review
 from django.db import models
 import datetime
+=======
+from viewer.models import Session, Service, Review
+>>>>>>> master
 
 class SessionForm(forms.ModelForm):
     class Meta:
@@ -16,9 +20,11 @@ class SessionForm(forms.ModelForm):
 class ServiceForm(forms.ModelForm):
     class Meta:
         model = Service
-        fields = ['name', 'description', 'price', 'duration', 'currency', 'session_type']
+        fields = ['name', 'description', 'price', 'duration', 'currency', 'session_type', 'is_active']
         widgets = {
             'description': forms.Textarea(attrs={'rows': 4}),
+            'price': forms.NumberInput(attrs={'min': 0, 'step': 0.01}),
+            'duration': forms.NumberInput(attrs={'min': 15, 'step': 15}),
         }
 
 class ReviewForm(forms.ModelForm):
@@ -27,6 +33,7 @@ class ReviewForm(forms.ModelForm):
         fields = ['rating', 'comment']
         widgets = {
             'comment': forms.Textarea(attrs={'rows': 4}),
+<<<<<<< HEAD
         }
 
 class BookingForm(forms.ModelForm):
@@ -112,3 +119,6 @@ class BookingForm(forms.ModelForm):
             kwargs['initial'] = kwargs.get('initial', {})
             kwargs['initial']['service'] = service
         return kwargs 
+=======
+        } 
+>>>>>>> master
