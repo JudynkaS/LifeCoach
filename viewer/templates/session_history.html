@@ -34,6 +34,9 @@
                                 </form>
                             {% endif %}
                             <a href="{% url 'viewer:session-detail' session.id %}" class="btn btn-outline-primary btn-sm">View Details</a>
+                            {% if request.user.profile == session.client and session.can_cancel or request.user.profile == session.coach or request.user.is_superuser %}
+                                <a href="{% url 'viewer:session_edit' session.pk %}" class="btn btn-warning">Edit</a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -69,6 +72,9 @@
                             <a href="{% url 'viewer:session-detail' session.id %}" class="btn btn-outline-primary btn-sm">View Details</a>
                             {% if not session.has_review and not user.profile.is_coach %}
                                 <a href="{% url 'viewer:create-review' session.id %}" class="btn btn-success btn-sm">Leave Review</a>
+                            {% endif %}
+                            {% if request.user.profile == session.client and session.can_cancel or request.user.profile == session.coach or request.user.is_superuser %}
+                                <a href="{% url 'viewer:session_edit' session.pk %}" class="btn btn-warning">Edit</a>
                             {% endif %}
                         </div>
                     </div>

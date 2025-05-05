@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .views import SessionUpdateView
 
 app_name = 'viewer'
 
@@ -12,5 +13,7 @@ urlpatterns = [
     path('services/<int:pk>/delete/', views.ServiceDeleteView.as_view(), name='service_delete'),
     path('sessions/', views.SessionHistoryView.as_view(), name='session_history'),
     path('sessions/<int:pk>/', views.SessionDetailView.as_view(), name='session_detail'),
+    path('sessions/<int:pk>/edit/', SessionUpdateView.as_view(), name='session_edit'),
+    path('sessions/<int:pk>/cancel/', views.SessionCancelView.as_view(), name='cancel_session'),
     path('book/', views.BookingCreateView.as_view(), name='book_session'),
 ] 

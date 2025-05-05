@@ -1,6 +1,8 @@
 from django import forms
 from django.utils import timezone
-from viewer.models import Session, Service, Review
+from .models import Service, Session, Review
+from django.db import models
+import datetime
 
 class SessionForm(forms.ModelForm):
     class Meta:
@@ -28,50 +30,85 @@ class ReviewForm(forms.ModelForm):
         }
 
 class BookingForm(forms.ModelForm):
+    date_time = forms.ChoiceField(label='Date time*', choices=[], widget=forms.Select())
     class Meta:
         model = Session
-        fields = ['service', 'date_time', 'type', 'notes']
+        fields = ['service', 'date_time', 'duration', 'notes']
         widgets = {
-            'date_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
             'notes': forms.Textarea(attrs={'rows': 3}),
         }
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
+        initial_date_time = None
+        if 'initial' in kwargs and 'date_time' in kwargs['initial']:
+            initial_date_time = kwargs['initial']['date_time']
         super().__init__(*args, **kwargs)
         if self.user and hasattr(self.user, 'profile'):
-            # Filter services based on user type
             if self.user.profile.is_coach:
                 self.fields['service'].queryset = Service.objects.filter(
                     coach=self.user,
                     is_active=True
                 )
+                self.fields['date_time'].widget = forms.TextInput(attrs={'readonly': 'readonly'})
             else:
                 self.fields['service'].queryset = Service.objects.filter(
                     is_active=True
                 )
+                service = self.initial.get('service') or self.data.get('service')
+                if service:
+                    try:
+                        service_obj = Service.objects.get(pk=service)
+                        today = timezone.now().date()
+                        slots = []
+                        booked_sessions = Session.objects.filter(
+                            service=service_obj,
+                            status='CONFIRMED'
+                        ).values_list('date_time', flat=True)
+                        coach_sessions = Session.objects.filter(
+                            coach=service_obj.coach.profile,
+                            status='CONFIRMED'
+                        ).exclude(service=service_obj).values_list('date_time', flat=True)
+                        all_booked_times = list(booked_sessions) + list(coach_sessions)
+                        for day in range(7):
+                            current_date = today + timezone.timedelta(days=day)
+                            for hour in range(9, 18):
+                                slot_time = timezone.make_aware(
+                                    datetime.datetime.combine(current_date, datetime.time(hour=hour))
+                                )
+                                is_available = True
+                                for booked_time in all_booked_times:
+                                    if abs((slot_time - booked_time).total_seconds()) < 3600:
+                                        is_available = False
+                                        break
+                                if is_available:
+                                    slots.append((slot_time.strftime('%Y-%m-%d %H:%M'), slot_time.strftime('%A %d.%m.%Y %H:%M')))
+                        self.fields['date_time'].choices = slots
+                        if initial_date_time:
+                            self.initial['date_time'] = initial_date_time
+                    except Service.DoesNotExist:
+                        self.fields['date_time'].choices = []
+                else:
+                    self.fields['date_time'].choices = [("", "Nejprve vyberte službu")]
+                    self.fields['date_time'].widget.attrs['disabled'] = 'disabled'
 
     def clean_date_time(self):
-        date_time = self.cleaned_data.get('date_time')
-        if date_time:
-            if date_time < timezone.now():
-                raise forms.ValidationError("Cannot book sessions in the past")
-            
-            # Check if the time slot is available
-            service = self.cleaned_data.get('service')
-            if service:
-                # Calculate end time based on service duration
-                end_time = date_time + timezone.timedelta(minutes=service.duration)
-                
-                # Check for overlapping sessions
-                overlapping = Session.objects.filter(
-                    service=service,
-                    date_time__lt=end_time,
-                    date_time__gt=date_time,
-                    status='CONFIRMED'
-                ).exists()
-                
-                if overlapping:
-                    raise forms.ValidationError("This time slot is already booked")
-        
-        return date_time 
+        date_time_str = self.cleaned_data.get('date_time')
+        from django.utils import timezone
+        import datetime
+        try:
+            date_time = timezone.make_aware(datetime.datetime.strptime(date_time_str, '%Y-%m-%d %H:%M'))
+        except Exception:
+            raise forms.ValidationError('Invalid date/time format.')
+        self.cleaned_data['date_time'] = date_time
+        return date_time
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        # Pokud je v GET parametr service, předej ho do initial
+        service = self.request.GET.get('service')
+        if service:
+            kwargs['initial'] = kwargs.get('initial', {})
+            kwargs['initial']['service'] = service
+        return kwargs 
