@@ -120,6 +120,9 @@ class Profile(Model):
     # Consent
     therapy_consent = models.BooleanField(default=False)
 
+    # Google refresh token
+    google_refresh_token = models.CharField(max_length=255, blank=True, null=True)
+
     class Meta:
         ordering = ['user__username']
 

@@ -6,11 +6,8 @@ from django.utils import timezone
 from django.contrib import messages
 
 from .models import Session, Service, Profile, Review
-from .forms import ServiceForm, BookingForm
-from .utils.google_calendar import create_psychology_session
-
-from .models import Session, Service
-from .forms import ServiceForm
+from .forms import ServiceForm, BookingForm, ReviewForm
+from .utils.google_calendar import create_coach_calendar_event, delete_coach_calendar_event
 
 class HomeView(TemplateView):
     template_name = 'home.html'
@@ -19,7 +16,7 @@ class HomeView(TemplateView):
 class SessionHistoryView(LoginRequiredMixin, ListView):
     model = Session
     template_name = 'viewer/session_history.html'
-    context_object_name = 'sessions'
+    context_object_name = 'object_list'
     paginate_by = 10
 
     def get_queryset(self):
@@ -211,12 +208,22 @@ class BookingCreateView(LoginRequiredMixin, CreateView):
         try:
             coach_profile = Profile.objects.get(user=coach_user)
             form.instance.coach = coach_profile
-            event = create_psychology_session(
-                client_email=self.request.user.email,
-                start_time=form.instance.date_time,
-                duration_minutes=form.instance.service.duration
+            
+            # Vytvoření události v Google kalendáři
+            event = create_coach_calendar_event(
+                coach_profile=coach_profile,
+                summary=f"Session with {self.request.user.get_full_name()}",
+                description=f"Service: {service.name}\nClient: {self.request.user.get_full_name()}",
+                start_dt=form.instance.date_time,
+                end_dt=form.instance.date_time + timezone.timedelta(minutes=service.duration),
+                timezone_str=str(timezone.get_current_timezone())
             )
-            messages.success(self.request, f'Session booked successfully! Google Calendar event created: {event.get("htmlLink")}')
+            if event:
+                # Ulož ID události do session
+                form.instance.google_calendar_event_id = event['id']
+                messages.success(self.request, f'Session booked successfully! Google Calendar event created: {event.get("htmlLink")}')
+            else:
+                messages.success(self.request, 'Session booked successfully!')
         except Profile.DoesNotExist:
             raise Exception(f"Coach {coach_user} nemá profil!")
         except Exception as e:
@@ -262,12 +269,38 @@ class SessionCancelView(LoginRequiredMixin, UserPassesTestMixin, View):
     def post(self, request, *args, **kwargs):
         session = Session.objects.get(pk=self.kwargs['pk'])
         if session.can_cancel:
+            # Pokud existuje ID události v kalendáři, smaž ji
+            if session.google_calendar_event_id:
+                try:
+                    delete_coach_calendar_event(session.coach, session.google_calendar_event_id)
+                except Exception as e:
+                    print(f"Failed to delete Google Calendar event: {e}")
+                    messages.warning(request, 'Session cancelled, but failed to delete Google Calendar event.')
+            
             session.status = 'CANCELLED'
             session.save()
             messages.success(request, 'Session has been cancelled successfully.')
         else:
             messages.error(request, 'Cannot cancel session less than 24 hours before start time.')
         return redirect('viewer:session_detail', pk=session.pk)
+
+class ReviewCreateView(LoginRequiredMixin, CreateView):
+    model = Review
+    form_class = ReviewForm
+    template_name = 'viewer/review_form.html'
+
+    def form_valid(self, form):
+        session_id = self.kwargs['pk']
+        form.instance.session_id = session_id
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('viewer:session_detail', args=[self.kwargs['pk']])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['session'] = Session.objects.get(pk=self.kwargs['pk'])
+        return context
 
 def home(request):
     return render(request, 'home.html')

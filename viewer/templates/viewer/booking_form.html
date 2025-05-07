@@ -1,30 +1,79 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
-{% block title %}{{ title }}{% endblock %}
+{% block title %}Book a Session{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="text-center">{{ title }}</h2>
-                </div>
-                <div class="card-body">
-                    <form method="post" id="booking-form">
-                        {% csrf_token %}
-                        {{ form|crispy }}
-                        <div class="d-grid gap-2 mt-4">
-                            <button type="submit" class="btn btn-primary">{{ button_text }}</button>
-                            <a href="{% url 'viewer:services' %}" class="btn btn-secondary">Cancel</a>
-                        </div>
-                    </form>
-                </div>
+<div class="container d-flex justify-content-center" style="min-height: 100vh; background: #eaf7e6;">
+    <div class="col-12 col-md-8 col-lg-6 col-xl-5" style="margin-top: 80px; margin-bottom: 40px;">
+        <div class="card shadow border-0 rounded-4 p-4" style="background: #fff;">
+            <div class="text-center mb-4">
+                <h1 class="fw-bold" style="color: #6fc16f; font-size: 2.2rem;">Book a Session</h1>
             </div>
+            {% if user.profile.is_coach %}
+                <div class="alert alert-info text-center mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    As a coach, you cannot book sessions. You can only receive bookings from clients.
+                </div>
+            {% else %}
+                <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-success btn-lg fw-bold" style="background: #6fc16f; border: none;">
+                            Book Session
+                        </button>
+                        <a href="{% url 'viewer:session_history' %}" class="btn btn-secondary btn-lg fw-bold">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            {% endif %}
         </div>
     </div>
 </div>
+
+<style>
+.card {
+    box-shadow: 0 4px 24px rgba(111, 193, 111, 0.10), 0 1.5px 6px rgba(0,0,0,0.04);
+    border-radius: 1.5rem;
+}
+.form-label {
+    font-weight: 500;
+    color: #5a6c5a;
+    margin-bottom: 0.35rem;
+}
+.form-control, .form-select {
+    border: 1px solid #dee2e6;
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    width: 100%;
+    font-size: 1.1rem;
+    background: #f8faf8;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #6fc16f;
+    box-shadow: 0 0 0 0.2rem rgba(111,193,111,.15);
+}
+button.btn, a.btn {
+    min-width: 180px;
+    border-radius: 0.75rem;
+}
+.btn-success {
+    background: #6fc16f;
+    border: none;
+}
+.btn-success:hover, .btn-success:focus {
+    background: #5bb85b;
+}
+.btn-secondary {
+    background: #7a868a;
+    border: none;
+}
+.btn-secondary:hover, .btn-secondary:focus {
+    background: #5a6c5a;
+}
+</style>
 
 <script>
 // Najdi select pro službu

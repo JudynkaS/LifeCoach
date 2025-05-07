@@ -56,13 +56,6 @@ A web application for coaching and psychological counseling.
   - [ ] Payment overviews
   - [ ] Client engagement analytics
 
-- [x] Google Calendar integrace
-- [x] Booking pouze na volné sloty
-- [x] Validace překrývání rezervací
-- [x] Přesun client_secret.json do správné složky
-- [x] Oprava importů v BookingForm
-- [x] Uložení a push na GitHub
-
 ## Database Structure
 
 ### Entity Relationship Diagram

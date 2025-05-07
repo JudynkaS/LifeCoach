@@ -22,14 +22,10 @@ from LifeCoach import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-<<<<<<< Updated upstream
     path('accounts/', include('accounts.urls', namespace='accounts')),
     path('', include('viewer.urls', namespace='viewer')),
+    path('accounts/', include('allauth.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
- 
-=======
-    path('hello', hello),
-    path('', hello, name='home'),
-]
 
->>>>>>> Stashed changes
+
+

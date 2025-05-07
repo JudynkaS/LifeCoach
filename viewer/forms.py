@@ -92,7 +92,7 @@ class BookingForm(forms.ModelForm):
                     except Service.DoesNotExist:
                         self.fields['date_time'].choices = []
                 else:
-                    self.fields['date_time'].choices = [("", "Nejprve vyberte službu")]
+                    self.fields['date_time'].choices = [("", "Please select a service first")]
                     self.fields['date_time'].widget.attrs['disabled'] = 'disabled'
 
     def clean_date_time(self):
@@ -115,4 +115,42 @@ class BookingForm(forms.ModelForm):
             kwargs['initial'] = kwargs.get('initial', {})
             kwargs['initial']['service'] = service
         return kwargs
+
+    def clean(self):
+        cleaned_data = super().clean()
+        service = cleaned_data.get('service')
+        date_time = cleaned_data.get('date_time')
+        duration = cleaned_data.get('duration')
+        if service and date_time and duration:
+            from viewer.models import Session
+            # Convert date_time to datetime if it's a string
+            if isinstance(date_time, str):
+                import datetime
+                try:
+                    date_time = timezone.make_aware(datetime.datetime.strptime(date_time, '%Y-%m-%d %H:%M'))
+                except Exception:
+                    pass
+            start = date_time
+            end = date_time + timezone.timedelta(minutes=int(duration))
+
+            # Helper for overlap: (A starts before B ends) and (A ends after B starts)
+            def overlaps(qs, who):
+                qs = qs.filter(status='CONFIRMED')
+                if self.instance.pk:
+                    qs = qs.exclude(pk=self.instance.pk)
+                for s in qs:
+                    s_start = s.date_time
+                    s_end = s.date_time + timezone.timedelta(minutes=s.duration)
+                    if (start < s_end) and (end > s_start):
+                        raise forms.ValidationError(
+                            f"{who} already has a session that overlaps with this time."
+                        )
+
+            # Check for overlapping sessions for the coach
+            overlaps(Session.objects.filter(coach=service.coach.profile), "This coach")
+            # Check for overlapping sessions for the client
+            if self.user and hasattr(self.user, 'profile'):
+                overlaps(Session.objects.filter(client=self.user.profile), "You")
+
+        return cleaned_data
 

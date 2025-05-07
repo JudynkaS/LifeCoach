@@ -3,79 +3,103 @@
 {% block title %}Session Details{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="text-center">Session Details</h2>
+<div class="container d-flex justify-content-center" style="min-height: 80vh; background: #eaf7e6;">
+    <div class="col-12 col-md-10 col-lg-8 col-xl-7" style="margin-top: 60px; margin-bottom: 40px;">
+        <div class="card shadow border-0 rounded-4 p-4" style="background: #fff;">
+            <div class="text-center mb-4">
+                <h1 class="fw-bold" style="color: #6fc16f; font-size: 2.2rem;">Session Details</h1>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <div class="fs-5 fw-semibold text-secondary">Service</div>
+                    <div class="fs-5">{{ session.service.name }}</div>
                 </div>
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <h5>Service</h5>
-                            <p>{{ session.service.name }}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <h5>Status</h5>
-                            <span class="badge bg-{% if session.status == 'CONFIRMED' %}success{% elif session.status == 'CANCELLED' %}danger{% else %}warning{% endif %}">
-                                {{ session.status }}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <h5>Date and Time</h5>
-                            <p>{{ session.date_time|date:"F j, Y, g:i a" }}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <h5>Duration</h5>
-                            <p>{{ session.duration }} minutes</p>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <h5>Type</h5>
-                            <p>{{ session.get_type_display }}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <h5>{% if user.profile.is_coach %}Client{% else %}Coach{% endif %}</h5>
-                            <p>{% if user.profile.is_coach %}{{ session.client.user.get_full_name }}{% else %}{{ session.coach.user.get_full_name }}{% endif %}</p>
-                        </div>
-                    </div>
-
-                    {% if session.notes %}
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <h5>Notes</h5>
-                            <p>{{ session.notes }}</p>
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="d-flex justify-content-between">
-                                <a href="{% url 'viewer:session_history' %}" class="btn btn-secondary">Back to Sessions</a>
-                                <div>
-                                    {% if session.can_cancel %}
-                                        <form method="post" action="{% url 'viewer:cancel_session' session.id %}" class="d-inline">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-danger">Cancel Session</button>
-                                        </form>
-                                    {% endif %}
-                                    {% if request.user.profile == session.client and session.can_cancel or request.user.profile == session.coach or request.user.is_superuser %}
-                                        <a href="{% url 'viewer:session_edit' session.pk %}" class="btn btn-warning">Edit</a>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
+                <div class="col-md-6 d-flex align-items-center justify-content-md-end justify-content-start">
+                    <span class="badge px-4 py-2 fs-6 bg-{% if session.status == 'CONFIRMED' %}success{% elif session.status == 'CANCELLED' %}danger{% else %}warning{% endif %}">
+                        {{ session.status|title }}
+                    </span>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <div class="fw-semibold text-secondary">Date and Time</div>
+                    <div class="fs-5">{{ session.date_time|date:"F j, Y, g:i a" }}</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="fw-semibold text-secondary">Duration</div>
+                    <div class="fs-5">{{ session.duration }} minutes</div>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <div class="fw-semibold text-secondary">Type</div>
+                    <div class="fs-5">{{ session.get_type_display }}</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="fw-semibold text-secondary">{% if user.profile.is_coach %}Client{% else %}Coach{% endif %}</div>
+                    <div class="fs-5">{% if user.profile.is_coach %}{{ session.client.user.get_full_name }}{% else %}{{ session.coach.user.get_full_name }}{% endif %}</div>
+                </div>
+            </div>
+            {% if session.notes %}
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="fw-semibold text-secondary">Notes</div>
+                    <div class="fs-5">{{ session.notes }}</div>
+                </div>
+            </div>
+            {% endif %}
+            <div class="row mt-4">
+                <div class="col-12 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                    <a href="{% url 'viewer:session_history' %}" class="btn btn-secondary btn-lg px-4">Back to Sessions</a>
+                    <div class="d-flex gap-2">
+                        {% if session.can_cancel %}
+                            <form method="post" action="{% url 'viewer:cancel_session' session.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-lg px-4">Cancel Session</button>
+                            </form>
+                        {% endif %}
+                        {% if request.user.profile == session.client and session.can_cancel or request.user.profile == session.coach or request.user.is_superuser %}
+                            <a href="{% url 'viewer:session_edit' session.pk %}" class="btn btn-warning btn-lg px-4">Edit</a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.card {
+    box-shadow: 0 4px 24px rgba(111, 193, 111, 0.10), 0 1.5px 6px rgba(0,0,0,0.04);
+    border-radius: 1.5rem;
+}
+.badge.bg-success {
+    background: #6fc16f !important;
+    color: #fff;
+}
+.badge.bg-danger {
+    background: #e74c3c !important;
+    color: #fff;
+}
+.badge.bg-warning {
+    background: #f1c40f !important;
+    color: #fff;
+}
+.btn-secondary {
+    background: #7a868a;
+    border: none;
+}
+.btn-secondary:hover, .btn-secondary:focus {
+    background: #5a6c5a;
+}
+.btn-warning {
+    background: #ffd966;
+    color: #333;
+    border: none;
+}
+.btn-warning:hover, .btn-warning:focus {
+    background: #ffe599;
+    color: #333;
+}
+</style>
 {% endblock %} 
