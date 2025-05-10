@@ -4,6 +4,7 @@
 *.pyc
 /images/
 /config
+<<<<<<< HEAD
 
 # Python
 __pycache__/
@@ -30,3 +31,4 @@ Thumbs.db
 
 # google calendar
 config/credentials.json
+
