@@ -1,43 +1,41 @@
-{% extends 'base.html' %}
+{% extends 'base_form.html' %}
 {% load crispy_forms_tags %}
+{% load static %}
 
-{% block title %}{{ title }}{% endblock %}
+{% block title %}Book a Session{% endblock %}
 
-{% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="text-center">{{ title }}</h2>
-                </div>
-                <div class="card-body">
-                    <form method="post" id="booking-form">
-                        {% csrf_token %}
-                        {{ form|crispy }}
-                        <div class="d-grid gap-2 mt-4">
-                            <button type="submit" class="btn btn-primary">{{ button_text }}</button>
-                            <a href="{% url 'viewer:services' %}" class="btn btn-secondary">Cancel</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
+{% block form_title %}
+    {% if is_edit %}Edit Session{% else %}Book a Session{% endif %}
+{% endblock %}
+
+{% block form_header %}
+    {% if user.profile.is_coach %}
+        <div class="alert alert-info text-center mb-0">
+            <i class="fas fa-info-circle me-2"></i>
+            As a coach, you cannot book sessions. You can only receive bookings from clients.
         </div>
-    </div>
-</div>
+    {% endif %}
+{% endblock %}
 
+{% block form_attrs %}enctype="multipart/form-data" class="needs-validation" novalidate id="booking-form"{% endblock %}
+
+{% block form_buttons %}
+    <button type="submit" class="btn btn-success btn-lg fw-bold">
+        {% if is_edit %}Save Changes{% else %}Book Session{% endif %}
+    </button>
+    <a href="{% url 'viewer:session_history' %}" class="btn btn-secondary btn-lg fw-bold">Cancel</a>
+{% endblock %}
+
+{% block extra_js %}
 <script>
-// Najdi select pro službu
+// Dynamické přesměrování podle zvolené služby
 const serviceSelect = document.getElementById('id_service');
 if (serviceSelect) {
     serviceSelect.addEventListener('change', function() {
-        // Odešli formulář jako GET, aby se načetly sloty
-        const form = document.getElementById('booking-form');
-        // Sestav URL s parametrem service
         const url = new URL(window.location.href);
         url.searchParams.set('service', this.value);
         window.location.href = url.toString();
     });
 }
 </script>
-{% endblock %} 
+{% endblock %}

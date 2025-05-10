@@ -3,19 +3,12 @@ from django.views.generic import TemplateView, CreateView, ListView, DetailView,
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.utils import timezone
-<<<<<<< HEAD
 from django.contrib import messages
-from django.contrib.auth.models import User
+from django.http import HttpResponseRedirect
 
 from .models import Session, Service, Profile, Review
-from .forms import ServiceForm, BookingForm
-from .utils.google_calendar import create_psychology_session
-=======
-from django.db.models import Q
-
-from .models import Session, Service
-from .forms import ServiceForm
->>>>>>> master
+from .forms import ServiceForm, BookingForm, ReviewForm
+from .utils.google_calendar import create_coach_calendar_event, delete_coach_calendar_event
 
 class HomeView(TemplateView):
     template_name = 'home.html'
@@ -24,7 +17,7 @@ class HomeView(TemplateView):
 class SessionHistoryView(LoginRequiredMixin, ListView):
     model = Session
     template_name = 'viewer/session_history.html'
-    context_object_name = 'sessions'
+    context_object_name = 'object_list'
     paginate_by = 10
 
     def get_queryset(self):
@@ -37,28 +30,31 @@ class SessionHistoryView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user_profile = self.request.user.profile
+        now = timezone.now()
         
         # Add upcoming and past sessions
         if user_profile.is_coach:
             context['upcoming_sessions'] = Session.objects.filter(
                 coach=user_profile,
-                date_time__gt=timezone.now(),
+                date_time__gt=now,
                 status='CONFIRMED'
-            ).order_by('date_time')
+            ).order_by('date_time')  # Seřazeno od nejbližšího termínu
+            
             context['past_sessions'] = Session.objects.filter(
                 coach=user_profile,
-                date_time__lte=timezone.now()
-            ).order_by('-date_time')
+                date_time__lte=now
+            ).order_by('-date_time')  # Seřazeno od nejnovějšího
         else:
             context['upcoming_sessions'] = Session.objects.filter(
                 client=user_profile,
-                date_time__gt=timezone.now(),
+                date_time__gt=now,
                 status='CONFIRMED'
-            ).order_by('date_time')
+            ).order_by('date_time')  # Seřazeno od nejbližšího termínu
+            
             context['past_sessions'] = Session.objects.filter(
                 client=user_profile,
-                date_time__lte=timezone.now()
-            ).order_by('-date_time')
+                date_time__lte=now
+            ).order_by('-date_time')  # Seřazeno od nejnovějšího
         
         return context
 
@@ -193,8 +189,6 @@ class ServiceDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         service = self.get_object()
         return self.request.user == service.coach
 
-<<<<<<< HEAD
-
 class BookingCreateView(LoginRequiredMixin, CreateView):
     model = Session
     form_class = BookingForm
@@ -218,25 +212,34 @@ class BookingCreateView(LoginRequiredMixin, CreateView):
         try:
             coach_profile = Profile.objects.get(user=coach_user)
             form.instance.coach = coach_profile
-            event = create_psychology_session(
-                client_email=self.request.user.email,
-                start_time=form.instance.date_time,
-                duration_minutes=form.instance.service.duration
+            # Vytvoření události v Google kalendáři
+            event = create_coach_calendar_event(
+                coach_profile=coach_profile,
+                summary=f"Session with {self.request.user.get_full_name()}",
+                description=f"Service: {service.name}\nClient: {self.request.user.get_full_name()}",
+                start_dt=form.instance.date_time,
+                end_dt=form.instance.date_time + timezone.timedelta(minutes=service.duration),
+                timezone_str=str(timezone.get_current_timezone())
             )
-            messages.success(self.request, f'Session booked successfully! Google Calendar event created: {event.get("htmlLink")}')
+            if event:
+                form.instance.google_calendar_event_id = event['id']
+                messages.success(self.request, f'Session booked successfully! Google Calendar event created: {event.get("htmlLink")}')
+            else:
+                messages.success(self.request, 'Session booked successfully!')
         except Profile.DoesNotExist:
             raise Exception(f"Coach {coach_user} nemá profil!")
         except Exception as e:
             print(f"Google Calendar error: {e}")
             messages.warning(self.request, f'Session booked, but failed to create Google Calendar event: {str(e)}')
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        # Redirect na session_history po úspěšném vytvoření
+        return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Book a Session'
         context['button_text'] = 'Book Session'
         return context
-
 
 class SessionUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Session
@@ -261,7 +264,6 @@ class SessionUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         context['button_text'] = 'Update Session'
         return context
 
-
 class SessionCancelView(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self):
         session = Session.objects.get(pk=self.kwargs['pk'])
@@ -271,6 +273,14 @@ class SessionCancelView(LoginRequiredMixin, UserPassesTestMixin, View):
     def post(self, request, *args, **kwargs):
         session = Session.objects.get(pk=self.kwargs['pk'])
         if session.can_cancel:
+            # Pokud existuje ID události v kalendáři, smaž ji
+            if session.google_calendar_event_id:
+                try:
+                    delete_coach_calendar_event(session.coach, session.google_calendar_event_id)
+                except Exception as e:
+                    print(f"Failed to delete Google Calendar event: {e}")
+                    messages.warning(request, 'Session cancelled, but failed to delete Google Calendar event.')
+            
             session.status = 'CANCELLED'
             session.save()
             messages.success(request, 'Session has been cancelled successfully.')
@@ -278,7 +288,23 @@ class SessionCancelView(LoginRequiredMixin, UserPassesTestMixin, View):
             messages.error(request, 'Cannot cancel session less than 24 hours before start time.')
         return redirect('viewer:session_detail', pk=session.pk)
 
-=======
->>>>>>> master
+class ReviewCreateView(LoginRequiredMixin, CreateView):
+    model = Review
+    form_class = ReviewForm
+    template_name = 'viewer/review_form.html'
+
+    def form_valid(self, form):
+        session_id = self.kwargs['pk']
+        form.instance.session_id = session_id
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('viewer:session_detail', args=[self.kwargs['pk']])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['session'] = Session.objects.get(pk=self.kwargs['pk'])
+        return context
+
 def home(request):
     return render(request, 'home.html')

@@ -28,7 +28,7 @@ class ServiceAdmin(admin.ModelAdmin):
     list_display = ('name', 'description', 'duration', 'price', 'coach')
     list_filter = ('coach', 'session_type')
     search_fields = ('name', 'description', 'coach__username')
-    raw_id_fields = ('coach', 'session_type')
+    raw_id_fields = ('coach',)
 
 
 @admin.register(Session)

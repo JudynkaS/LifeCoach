@@ -1,77 +1,47 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Session Details{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
+<div class="container py-4">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="text-center">Session Details</h2>
-                </div>
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <h5>Service</h5>
-                            <p>{{ session.service.name }}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <h5>Status</h5>
-                            <span class="badge bg-{% if session.status == 'CONFIRMED' %}success{% elif session.status == 'CANCELLED' %}danger{% else %}warning{% endif %}">
-                                {{ session.status }}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <h5>Date and Time</h5>
-                            <p>{{ session.date_time|date:"F j, Y, g:i a" }}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <h5>Duration</h5>
-                            <p>{{ session.duration }} minutes</p>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <h5>Type</h5>
-                            <p>{{ session.get_type_display }}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <h5>{% if user.profile.is_coach %}Client{% else %}Coach{% endif %}</h5>
-                            <p>{% if user.profile.is_coach %}{{ session.client.user.get_full_name }}{% else %}{{ session.coach.user.get_full_name }}{% endif %}</p>
-                        </div>
-                    </div>
-
-                    {% if session.notes %}
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <h5>Notes</h5>
-                            <p>{{ session.notes }}</p>
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="d-flex justify-content-between">
-                                <a href="{% url 'viewer:session_history' %}" class="btn btn-secondary">Back to Sessions</a>
-                                <div>
-                                    {% if session.can_cancel %}
-                                        <form method="post" action="{% url 'viewer:cancel_session' session.id %}" class="d-inline">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-danger">Cancel Session</button>
-                                        </form>
-                                    {% endif %}
-                                    {% if request.user.profile == session.client and session.can_cancel or request.user.profile == session.coach or request.user.is_superuser %}
-                                        <a href="{% url 'viewer:session_edit' session.pk %}" class="btn btn-warning">Edit</a>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
+        <div class="col-12 col-lg-8">
+            <div class="card page-card">
+                <div class="card-body text-center">
+                    <h1 class="mb-4 text-primary-green page-title">Session Details</h1>
+                    <table class="table table-borderless mb-4 w-auto mx-auto">
+                        <tr><th>Service:</th><td>{{ session.service.name }}</td></tr>
+                        <tr><th>Date and Time:</th><td>{{ session.date_time|date:"F j, Y, g:i a" }}</td></tr>
+                        <tr><th>Duration:</th><td>{{ session.duration }} minutes</td></tr>
+                        <tr><th>Type:</th><td>{{ session.get_type_display }}</td></tr>
+                        <tr>
+                            <th>Status:</th>
+                            <td>
+                                <span class="badge px-4 py-2 fs-6 bg-{% if session.status == 'CONFIRMED' %}success{% elif session.status == 'CANCELLED' %}danger{% else %}warning{% endif %}">
+                                    {{ session.status|title }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>{% if user.profile.is_coach %}Client{% else %}Coach{% endif %}:</th>
+                            <td>{% if user.profile.is_coach %}{{ session.client.user.get_full_name }}{% else %}{{ session.coach.user.get_full_name }}{% endif %}</td>
+                        </tr>
+                        {% if session.notes %}
+                        <tr><th>Notes:</th><td>{{ session.notes }}</td></tr>
+                        {% endif %}
+                    </table>
+                    <div class="d-flex flex-wrap justify-content-center gap-3 mt-4 w-100">
+                        <a href="{% url 'viewer:session_history' %}" class="btn btn-secondary btn-lg px-4 fw-bold">Back to Sessions</a>
+                        {% if session.can_cancel %}
+                            <form method="post" action="{% url 'viewer:cancel_session' session.id %}" class="inline-form m-0 p-0">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-lg px-4 fw-bold">Cancel Session</button>
+                            </form>
+                        {% endif %}
+                        {% if request.user.profile == session.client and session.can_cancel or request.user.profile == session.coach or request.user.is_superuser %}
+                            <a href="{% url 'viewer:session_edit' session.pk %}" class="btn btn-warning btn-lg px-4 fw-bold">Edit</a>
+                        {% endif %}
                     </div>
                 </div>
             </div>

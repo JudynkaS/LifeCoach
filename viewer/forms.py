@@ -1,14 +1,17 @@
 from django import forms
-<<<<<<< HEAD
 from django.utils import timezone
-from .models import Service, Session, Review
-from django.db import models
-import datetime
-=======
-from viewer.models import Session, Service, Review
->>>>>>> master
 
-class SessionForm(forms.ModelForm):
+import datetime
+from viewer.models import Session, Service, Review
+
+class BaseStyledForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            existing_class = field.widget.attrs.get('class', '')
+            field.widget.attrs['class'] = (existing_class + ' form-control').strip()
+
+class SessionForm(BaseStyledForm):
     class Meta:
         model = Session
         fields = ['coach', 'service', 'date_time', 'type', 'notes']
@@ -17,7 +20,7 @@ class SessionForm(forms.ModelForm):
             'notes': forms.Textarea(attrs={'rows': 4}),
         }
 
-class ServiceForm(forms.ModelForm):
+class ServiceForm(BaseStyledForm):
     class Meta:
         model = Service
         fields = ['name', 'description', 'price', 'duration', 'currency', 'session_type', 'is_active']
@@ -27,20 +30,19 @@ class ServiceForm(forms.ModelForm):
             'duration': forms.NumberInput(attrs={'min': 15, 'step': 15}),
         }
 
-class ReviewForm(forms.ModelForm):
+class ReviewForm(BaseStyledForm):
     class Meta:
         model = Review
         fields = ['rating', 'comment']
         widgets = {
             'comment': forms.Textarea(attrs={'rows': 4}),
-<<<<<<< HEAD
         }
 
-class BookingForm(forms.ModelForm):
+class BookingForm(BaseStyledForm):
     date_time = forms.ChoiceField(label='Date time*', choices=[], widget=forms.Select())
     class Meta:
         model = Session
-        fields = ['service', 'date_time', 'duration', 'notes']
+        fields = ['service', 'date_time', 'duration', 'type', 'notes']
         widgets = {
             'notes': forms.Textarea(attrs={'rows': 3}),
         }
@@ -57,7 +59,7 @@ class BookingForm(forms.ModelForm):
                     coach=self.user,
                     is_active=True
                 )
-                self.fields['date_time'].widget = forms.TextInput(attrs={'readonly': 'readonly'})
+                self.fields['date_time'].widget = forms.TextInput(attrs={'readonly': 'readonly', 'class': 'form-control'})
             else:
                 self.fields['service'].queryset = Service.objects.filter(
                     is_active=True
@@ -96,7 +98,7 @@ class BookingForm(forms.ModelForm):
                     except Service.DoesNotExist:
                         self.fields['date_time'].choices = []
                 else:
-                    self.fields['date_time'].choices = [("", "Nejprve vyberte službu")]
+                    self.fields['date_time'].choices = [("", "Please select a service first")]
                     self.fields['date_time'].widget.attrs['disabled'] = 'disabled'
 
     def clean_date_time(self):
@@ -118,7 +120,43 @@ class BookingForm(forms.ModelForm):
         if service:
             kwargs['initial'] = kwargs.get('initial', {})
             kwargs['initial']['service'] = service
-        return kwargs 
-=======
-        } 
->>>>>>> master
+        return kwargs
+
+    def clean(self):
+        cleaned_data = super().clean()
+        service = cleaned_data.get('service')
+        date_time = cleaned_data.get('date_time')
+        duration = cleaned_data.get('duration')
+        if service and date_time and duration:
+            from viewer.models import Session
+            # Convert date_time to datetime if it's a string
+            if isinstance(date_time, str):
+                import datetime
+                try:
+                    date_time = timezone.make_aware(datetime.datetime.strptime(date_time, '%Y-%m-%d %H:%M'))
+                except Exception:
+                    pass
+            start = date_time
+            end = date_time + timezone.timedelta(minutes=int(duration))
+
+            # Helper for overlap: (A starts before B ends) and (A ends after B starts)
+            def overlaps(qs, who):
+                qs = qs.filter(status='CONFIRMED')
+                if self.instance.pk:
+                    qs = qs.exclude(pk=self.instance.pk)
+                for s in qs:
+                    s_start = s.date_time
+                    s_end = s.date_time + timezone.timedelta(minutes=s.duration)
+                    if (start < s_end) and (end > s_start):
+                        raise forms.ValidationError(
+                            f"{who} already has a session that overlaps with this time. (Termín je již obsazený)"
+                        )
+
+            # Check for overlapping sessions for the coach
+            overlaps(Session.objects.filter(coach=service.coach.profile), "This coach")
+            # Check for overlapping sessions for the client
+            if self.user and hasattr(self.user, 'profile'):
+                overlaps(Session.objects.filter(client=self.user.profile), "You")
+
+        return cleaned_data
+

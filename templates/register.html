@@ -1,0 +1,17 @@
+{% extends 'base_form.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Register{% endblock %}
+
+{% block form_title %}Create Account{% endblock %}
+
+{% block form_header %}
+<p class="text-center text-muted mb-4">Fill in the form to create your account.</p>
+{% endblock %}
+
+{% block form_buttons %}
+<button type="submit" class="btn btn-success px-4 fw-bold">
+    <i class="fas fa-user-plus me-2"></i>Register
+</button>
+<a href="{% url 'accounts:login' %}" class="btn btn-outline-secondary fw-bold px-4">Back to Login</a>
+{% endblock %} 

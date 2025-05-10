@@ -1,6 +1,6 @@
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
-from .views import SignUpView, ProfileUpdateView, profile_view, ProfileDetailView  # removed client_intake
+from .views import SignUpView, ProfileUpdateView, profile_view, ProfileDetailView, google_oauth_start, google_oauth_callback  # removed client_intake
 
 app_name = 'accounts'
 
@@ -10,5 +10,7 @@ urlpatterns = [
     path('register/', SignUpView.as_view(), name='register'),
     path('profile/<int:pk>/', ProfileDetailView.as_view(), name='profile'),
     path('profile/edit/', ProfileUpdateView.as_view(), name='profile_edit'),
+    path('google-oauth/', google_oauth_start, name='google_oauth_start'),
+    path('google-oauth-callback/', google_oauth_callback, name='google_oauth_callback'),
     path('', include('django.contrib.auth.urls')),
 ]

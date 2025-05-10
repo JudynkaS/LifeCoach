@@ -432,9 +432,13 @@ class ProfileUpdateForm(ModelForm):
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'goals-checkbox-group'})
     )
 
+    # Přidávám pole pro jméno a příjmení
+    first_name = forms.CharField(max_length=30, required=True, label='First Name')
+    last_name = forms.CharField(max_length=30, required=True, label='Last Name')
+
     class Meta:
         model = Profile
-        fields = ['phone_prefix', 'phone', 'timezone', 'specialization', 'goals', 'bio', 
+        fields = ['first_name', 'last_name', 'phone_prefix', 'phone', 'timezone', 'specialization', 'goals', 'bio', 
                  'preferred_contact', 'notifications_enabled', 'avatar']
         labels = {
             'phone': 'Phone Number',
@@ -460,10 +464,13 @@ class ProfileUpdateForm(ModelForm):
                     self.initial['phone_prefix'] = prefix
                     self.initial['phone'] = self.instance.phone[len(prefix):]
                     break
-        
         # Set initial goals from comma-separated string
         if self.instance and self.instance.goals:
             self.initial['goals'] = self.instance.get_goals_list()
+        # Nastavím počáteční hodnoty pro jméno a příjmení z user modelu
+        if self.instance and self.instance.user:
+            self.initial['first_name'] = self.instance.user.first_name
+            self.initial['last_name'] = self.instance.user.last_name
 
     def clean_phone(self):
         phone = self.cleaned_data.get('phone')
@@ -479,19 +486,26 @@ class ProfileUpdateForm(ModelForm):
         phone = cleaned_data.get('phone')
         prefix = cleaned_data.get('phone_prefix')
         goals = cleaned_data.get('goals', [])
-        
         if phone and prefix:
             # Combine prefix and number
             cleaned_data['phone'] = f"{prefix}{phone}"
-        
         # Convert goals list to comma-separated string
         if goals:
             cleaned_data['goals'] = ','.join(goals)
-        
         # Generate bio if specialization or goals changed
         if 'specialization' in self.changed_data or 'goals' in self.changed_data:
             self.instance.specialization = cleaned_data.get('specialization')
             self.instance.goals = cleaned_data.get('goals')
             cleaned_data['bio'] = self.instance.generate_bio()
-        
         return cleaned_data
+
+    def save(self, commit=True):
+        profile = super().save(commit=False)
+        # Uložím jméno a příjmení do user modelu
+        user = profile.user
+        user.first_name = self.cleaned_data['first_name']
+        user.last_name = self.cleaned_data['last_name']
+        if commit:
+            user.save()
+            profile.save()
+        return profile

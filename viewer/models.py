@@ -24,6 +24,10 @@ class SessionStatus(models.Model):
     created = DateTimeField(auto_now_add=True)
     updated = DateTimeField(auto_now=True)
 
+    class Meta:
+        verbose_name = "Session status"
+        verbose_name_plural = "Session statuses"
+
     def __str__(self):
         return self.name
 
@@ -47,7 +51,11 @@ class Service(models.Model):
     currency = CharField(max_length=3, default='USD')
     category = models.ForeignKey('Category', on_delete=models.CASCADE, related_name='services', null=True, blank=True)
     coach = ForeignKey(settings.AUTH_USER_MODEL, on_delete=CASCADE, related_name='services')
-    session_type = ForeignKey('viewer.SessionType', on_delete=CASCADE, related_name='services')
+    session_type = models.CharField(
+        choices=[('online', 'Online'), ('personal', 'Personal')],
+        default='online',
+        max_length=20
+    )
     created = DateTimeField(auto_now_add=True)
     updated = DateTimeField(auto_now=True)
 
@@ -71,18 +79,19 @@ class Session(models.Model):
     coach = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='coach_sessions')
     service = models.ForeignKey('viewer.Service', on_delete=models.CASCADE)
     date_time = models.DateTimeField()
-    duration = models.IntegerField(default=60)  # default duration 60 minutes
-    type = models.CharField(max_length=10, choices=SESSION_TYPES, default='online')  # default to online sessions
-    status = models.CharField(max_length=10, choices=SESSION_STATUS, default='CONFIRMED')
-    notes = models.TextField(blank=True, null=True)  # make notes optional
+    duration = models.IntegerField(help_text='Duration in minutes')
+    type = models.CharField(max_length=10, choices=SESSION_TYPES, default='online')
+    status = models.CharField(max_length=20, choices=SESSION_STATUS, default='CONFIRMED')
+    notes = models.TextField(blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+    google_calendar_event_id = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         ordering = ['-date_time']
 
     def __str__(self):
-        return f"{self.service.name} with {self.coach} on {self.date_time}"
+        return f"{self.service.name} - {self.date_time}"
 
     @property
     def is_past(self):
