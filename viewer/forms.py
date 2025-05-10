@@ -4,8 +4,14 @@ from django.utils import timezone
 import datetime
 from viewer.models import Session, Service, Review
 
+class BaseStyledForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            existing_class = field.widget.attrs.get('class', '')
+            field.widget.attrs['class'] = (existing_class + ' form-control').strip()
 
-class SessionForm(forms.ModelForm):
+class SessionForm(BaseStyledForm):
     class Meta:
         model = Session
         fields = ['coach', 'service', 'date_time', 'type', 'notes']
@@ -14,7 +20,7 @@ class SessionForm(forms.ModelForm):
             'notes': forms.Textarea(attrs={'rows': 4}),
         }
 
-class ServiceForm(forms.ModelForm):
+class ServiceForm(BaseStyledForm):
     class Meta:
         model = Service
         fields = ['name', 'description', 'price', 'duration', 'currency', 'session_type', 'is_active']
@@ -24,7 +30,7 @@ class ServiceForm(forms.ModelForm):
             'duration': forms.NumberInput(attrs={'min': 15, 'step': 15}),
         }
 
-class ReviewForm(forms.ModelForm):
+class ReviewForm(BaseStyledForm):
     class Meta:
         model = Review
         fields = ['rating', 'comment']
@@ -32,11 +38,11 @@ class ReviewForm(forms.ModelForm):
             'comment': forms.Textarea(attrs={'rows': 4}),
         }
 
-class BookingForm(forms.ModelForm):
+class BookingForm(BaseStyledForm):
     date_time = forms.ChoiceField(label='Date time*', choices=[], widget=forms.Select())
     class Meta:
         model = Session
-        fields = ['service', 'date_time', 'duration', 'notes']
+        fields = ['service', 'date_time', 'duration', 'type', 'notes']
         widgets = {
             'notes': forms.Textarea(attrs={'rows': 3}),
         }
@@ -53,7 +59,7 @@ class BookingForm(forms.ModelForm):
                     coach=self.user,
                     is_active=True
                 )
-                self.fields['date_time'].widget = forms.TextInput(attrs={'readonly': 'readonly'})
+                self.fields['date_time'].widget = forms.TextInput(attrs={'readonly': 'readonly', 'class': 'form-control'})
             else:
                 self.fields['service'].queryset = Service.objects.filter(
                     is_active=True
@@ -143,7 +149,7 @@ class BookingForm(forms.ModelForm):
                     s_end = s.date_time + timezone.timedelta(minutes=s.duration)
                     if (start < s_end) and (end > s_start):
                         raise forms.ValidationError(
-                            f"{who} already has a session that overlaps with this time."
+                            f"{who} already has a session that overlaps with this time. (Termín je již obsazený)"
                         )
 
             # Check for overlapping sessions for the coach

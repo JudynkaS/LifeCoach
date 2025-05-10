@@ -6,6 +6,18 @@
 
 {% block extra_css %}
 <style>
+    .register-padding-fix {
+        padding-top: 120px !important;
+        padding-bottom: 60px;
+        min-height: 100vh;
+        background: #eaf7e6;
+    }
+    /* Posune první pole formuláře dolů, pokud by bylo schované pod navbar */
+    .register-padding-fix form > div:first-child,
+    .register-padding-fix .form-group:first-child,
+    .register-padding-fix input[type="text"]:first-of-type {
+        margin-top: 60px !important;
+    }
     .password-input-group {
         position: relative;
     }
@@ -64,7 +76,8 @@
 {% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container">
+    <h1 class="text-center mb-4 text-primary-green">Create an Account</h1>
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <div class="card">

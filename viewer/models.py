@@ -24,6 +24,10 @@ class SessionStatus(models.Model):
     created = DateTimeField(auto_now_add=True)
     updated = DateTimeField(auto_now=True)
 
+    class Meta:
+        verbose_name = "Session status"
+        verbose_name_plural = "Session statuses"
+
     def __str__(self):
         return self.name
 
@@ -47,7 +51,11 @@ class Service(models.Model):
     currency = CharField(max_length=3, default='USD')
     category = models.ForeignKey('Category', on_delete=models.CASCADE, related_name='services', null=True, blank=True)
     coach = ForeignKey(settings.AUTH_USER_MODEL, on_delete=CASCADE, related_name='services')
-    session_type = ForeignKey('viewer.SessionType', on_delete=CASCADE, related_name='services')
+    session_type = models.CharField(
+        choices=[('online', 'Online'), ('personal', 'Personal')],
+        default='online',
+        max_length=20
+    )
     created = DateTimeField(auto_now_add=True)
     updated = DateTimeField(auto_now=True)
 

@@ -14,6 +14,6 @@ urlpatterns = [
     path('sessions/<int:pk>/', views.SessionDetailView.as_view(), name='session_detail'),
     path('sessions/<int:pk>/edit/', views.SessionUpdateView.as_view(), name='session_edit'),
     path('sessions/<int:pk>/cancel/', views.SessionCancelView.as_view(), name='cancel_session'),
-    path('sessions/book/', views.BookingCreateView.as_view(), name='book_session'),
+    path('booking/create/', views.BookingCreateView.as_view(), name='booking_create'),
     path('sessions/<int:pk>/review/', views.ReviewCreateView.as_view(), name='create-review'),
 ]

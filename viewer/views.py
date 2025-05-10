@@ -4,6 +4,7 @@ from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.utils import timezone
 from django.contrib import messages
+from django.http import HttpResponseRedirect
 
 from .models import Session, Service, Profile, Review
 from .forms import ServiceForm, BookingForm, ReviewForm
@@ -29,28 +30,31 @@ class SessionHistoryView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user_profile = self.request.user.profile
+        now = timezone.now()
         
         # Add upcoming and past sessions
         if user_profile.is_coach:
             context['upcoming_sessions'] = Session.objects.filter(
                 coach=user_profile,
-                date_time__gt=timezone.now(),
+                date_time__gt=now,
                 status='CONFIRMED'
-            ).order_by('date_time')
+            ).order_by('date_time')  # Seřazeno od nejbližšího termínu
+            
             context['past_sessions'] = Session.objects.filter(
                 coach=user_profile,
-                date_time__lte=timezone.now()
-            ).order_by('-date_time')
+                date_time__lte=now
+            ).order_by('-date_time')  # Seřazeno od nejnovějšího
         else:
             context['upcoming_sessions'] = Session.objects.filter(
                 client=user_profile,
-                date_time__gt=timezone.now(),
+                date_time__gt=now,
                 status='CONFIRMED'
-            ).order_by('date_time')
+            ).order_by('date_time')  # Seřazeno od nejbližšího termínu
+            
             context['past_sessions'] = Session.objects.filter(
                 client=user_profile,
-                date_time__lte=timezone.now()
-            ).order_by('-date_time')
+                date_time__lte=now
+            ).order_by('-date_time')  # Seřazeno od nejnovějšího
         
         return context
 
@@ -208,7 +212,6 @@ class BookingCreateView(LoginRequiredMixin, CreateView):
         try:
             coach_profile = Profile.objects.get(user=coach_user)
             form.instance.coach = coach_profile
-            
             # Vytvoření události v Google kalendáři
             event = create_coach_calendar_event(
                 coach_profile=coach_profile,
@@ -219,7 +222,6 @@ class BookingCreateView(LoginRequiredMixin, CreateView):
                 timezone_str=str(timezone.get_current_timezone())
             )
             if event:
-                # Ulož ID události do session
                 form.instance.google_calendar_event_id = event['id']
                 messages.success(self.request, f'Session booked successfully! Google Calendar event created: {event.get("htmlLink")}')
             else:
@@ -229,7 +231,9 @@ class BookingCreateView(LoginRequiredMixin, CreateView):
         except Exception as e:
             print(f"Google Calendar error: {e}")
             messages.warning(self.request, f'Session booked, but failed to create Google Calendar event: {str(e)}')
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        # Redirect na session_history po úspěšném vytvoření
+        return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
