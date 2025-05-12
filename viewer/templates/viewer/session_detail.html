@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load tz %}
 
 {% block title %}Session Details{% endblock %}
 
@@ -12,7 +13,7 @@
                     <h1 class="mb-4 text-primary-green page-title">Session Details</h1>
                     <table class="table table-borderless mb-4 w-auto mx-auto">
                         <tr><th>Service:</th><td>{{ session.service.name }}</td></tr>
-                        <tr><th>Date and Time:</th><td>{{ session.date_time|date:"F j, Y, g:i a" }}</td></tr>
+                        <tr><th>Date and Time:</th><td>{{ session.date_time|timezone:request.user.profile.timezone|date:"F j, Y, g:i a" }} <br><small class="text-muted">(Time zone: {{ request.user.profile.timezone }})</small></td></tr>
                         <tr><th>Duration:</th><td>{{ session.duration }} minutes</td></tr>
                         <tr><th>Type:</th><td>{{ session.get_type_display }}</td></tr>
                         <tr>
@@ -25,7 +26,13 @@
                         </tr>
                         <tr>
                             <th>{% if user.profile.is_coach %}Client{% else %}Coach{% endif %}:</th>
-                            <td>{% if user.profile.is_coach %}{{ session.client.user.get_full_name }}{% else %}{{ session.coach.user.get_full_name }}{% endif %}</td>
+                            <td>
+                                {% if user.profile.is_coach %}
+                                    <a href="{% url 'accounts:client_detail' session.client.pk %}">{{ session.client.user.get_full_name }}</a>
+                                {% else %}
+                                    {{ session.coach.user.get_full_name }}
+                                {% endif %}
+                            </td>
                         </tr>
                         {% if session.notes %}
                         <tr><th>Notes:</th><td>{{ session.notes }}</td></tr>

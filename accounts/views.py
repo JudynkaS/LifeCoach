@@ -3,7 +3,7 @@ from django.contrib.auth.views import LoginView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy, reverse
-from django.views.generic import CreateView, DetailView, UpdateView
+from django.views.generic import CreateView, DetailView, UpdateView, ListView
 from django.contrib import messages
 import os
 from django.conf import settings
@@ -99,3 +99,20 @@ def google_oauth_callback(request):
     profile.save()
     messages.success(request, 'Google Calendar successfully connected!')
     return redirect('accounts:profile_edit')
+
+class ClientDetailView(LoginRequiredMixin, DetailView):
+    model = Profile
+    template_name = 'accounts/client_detail.html'
+    context_object_name = 'profile'
+    
+    def get_queryset(self):
+        # Jen kouč může zobrazit detail klienta
+        return Profile.objects.filter(is_client=True)
+
+class ClientListView(LoginRequiredMixin, ListView):
+    model = Profile
+    template_name = 'accounts/client_list.html'
+    context_object_name = 'clients'
+
+    def get_queryset(self):
+        return Profile.objects.filter(is_client=True)

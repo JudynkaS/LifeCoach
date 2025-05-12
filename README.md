@@ -18,40 +18,30 @@ A web application for coaching and psychological counseling.
     - [x] Payment history
 
 - [x] 2 Booking system (`feature/booking-system`)
-  - [x] Ability to book appointments (US time, EU) (`feature/appointment-booking`)
+  - [x] Ability to book appointments (US time, EU) 
     - [x] Personal or online session
     - [x] Time slot selection
     - [x] Service selection
-  - [x] View available slots (`feature/timezone-management`)
-  - [x] Cancel or reschedule sessions (`feature/session-cancellation`)
+  - [x] View available slots 
+  - [x] Cancel or reschedule sessions 
     - [x] More than 24 hours in advance – allowed
     - [x] Less than 24 hours – admin only
 
-- [ ] 3 List of Services and Prices (`feature/services-prices`)
-  - [ ] Service model implementation
-  - [ ] Service catalog view
-  - [ ] Price list
-  - [ ] Service availability calendar
+- [x] 3 List of Services and Prices (`feature/services-prices`)
+  - [x] Service model implementation
+  - [x] Service catalog view
+  - [x] Price list
 
 - [ ] 4 Payment integration (`feature/payment-integration`)
   - [ ] PayPal (`feature/paypal-integration`)
   - [ ] Venmo (`feature/venmo-integration`)
   - [ ] Cash (`feature/cash-payment-handling`)
 
-- [ ] 5 Content management (`feature/content-management`)
-  - [ ] Downloadable materials (`feature/material-downloads`)
-  - [ ] Articles (`feature/article-management`)
-  - [ ] Courses (`feature/course-system`)
-
-- [ ] 6 Notifications (`feature/notifications`)
-  - [ ] Session reminders (`feature/session-reminders`)
-  - [ ] News and announcements (`feature/announcements`)
-
-- [ ] 7 Session Feedback (`feature/session-feedback`)
+- [ ] 5 Session Feedback (`feature/session-feedback`)
   - [ ] Rating system after completed session
   - [ ] Optional written review/comments
 
-- [ ] 8 Reporting (`feature/reporting-analytics`)
+- [ ] 6 Reporting (`feature/reporting-analytics`)
   - [ ] Booking reports
   - [ ] Payment overviews
   - [ ] Client engagement analytics

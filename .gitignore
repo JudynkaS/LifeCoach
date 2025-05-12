@@ -4,31 +4,51 @@
 *.pyc
 /images/
 /config
-<<<<<<< HEAD
 
 # Python
 __pycache__/
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
 .Python
 *.log
 
 # Virtuální prostředí
 .venv/
+venv/
+ENV/
 
-# Media a statické soubory
-/media/
-/static/
-
+# Django
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+static/
 
 # IDE
 .idea/
-
+.vscode/
+*.swp
+*.swo
 
 # Systémové soubory
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# google calendar
+# Konfigurační soubory
+.env
 config/credentials.json
+*.env
+.env.*
+
+# Media a uploady
+/media/
+/static/
+/avatars/
+
+# Ostatní
+*.bak
+*.tmp
+*.temp
 
