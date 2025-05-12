@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load tz %}
 
 {% block title %}Session History{% endblock %}
 
@@ -9,6 +10,9 @@
         <div class="col-12 col-lg-10">
             <div class="card page-card">
                 <h1 class="text-center mb-4 text-primary-green page-title">Session History</h1>
+                <p class="text-muted mb-2">
+                    All times are shown in your timezone: <strong>{{ request.user.profile.timezone }}</strong>
+                </p>
                 {% if user.is_authenticated and not user.profile.is_coach %}
                     <div class="text-center mb-4">
                         <a href="{% url 'viewer:booking_create' %}" class="btn btn-success btn-lg fw-bold">
@@ -20,11 +24,11 @@
                     <h2 class="h4 section-title mb-3">Upcoming Sessions</h2>
                     <div class="row g-3 mb-4">
                         {% for session in upcoming_sessions %}
-                        <div class="col-md-6 col-lg-4">
+                        <div class="col-md-6 col-lg-6">
                             <div class="card h-100 shadow-sm border-0 rounded-4">
-                                <div class="card-body text-center">
+                                <div class="card-body text-center p-4">
                                     <h5 class="card-title">{{ session.service.name }}</h5>
-                                    <p class="card-text mb-1">{{ session.date_time|date:"F j, Y H:i" }}</p>
+                                    <p class="card-text mb-1">{{ session.date_time|timezone:request.user.profile.timezone|date:"F j, Y H:i" }}</p>
                                     <p class="card-text mb-1">{{ session.get_type_display }}</p>
                                     <a href="{% url 'viewer:session_detail' session.id %}" class="btn btn-outline-primary btn-sm">Detail</a>
                                 </div>
@@ -38,11 +42,11 @@
                 <h2 class="h4 section-title mb-3">Past Sessions</h2>
                 <div class="row g-3">
                     {% for session in past_sessions %}
-                    <div class="col-md-6 col-lg-4">
+                    <div class="col-md-6 col-lg-6">
                         <div class="card h-100 shadow-sm border-0 rounded-4">
-                            <div class="card-body text-center">
+                            <div class="card-body text-center p-4">
                                 <h5 class="card-title">{{ session.service.name }}</h5>
-                                <p class="card-text mb-1">{{ session.date_time|date:"F j, Y H:i" }}</p>
+                                <p class="card-text mb-1">{{ session.date_time|timezone:request.user.profile.timezone|date:"F j, Y H:i" }}</p>
                                 <p class="card-text mb-1">{{ session.get_type_display }}</p>
                                 <a href="{% url 'viewer:session_detail' session.id %}" class="btn btn-outline-primary btn-sm">Detail</a>
                             </div>

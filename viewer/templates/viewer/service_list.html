@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Seznam služeb</h2>
+    {% if services %}
+        <div class="row">
+            {% for service in services %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ service.name }}</h5>
+                            <p class="card-text">{{ service.description|truncatewords:25 }}</p>
+                            <ul class="list-unstyled mb-2">
+                                <li><strong>Cena:</strong> {{ service.price }} {{ service.currency }}</li>
+                                <li><strong>Délka:</strong> {{ service.duration }} min</li>
+                                <li><strong>Typ:</strong> {{ service.get_session_type_display }}</li>
+                            </ul>
+                            <a href="{% url 'viewer:service_detail' service.pk %}" class="btn btn-success">Detail</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Žádné služby nejsou k dispozici.</p>
+    {% endif %}
+</div>
+{% endblock %} 

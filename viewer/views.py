@@ -5,6 +5,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.utils import timezone
 from django.contrib import messages
 from django.http import HttpResponseRedirect
+from django.core.serializers.json import DjangoJSONEncoder
+import json
 
 from .models import Session, Service, Profile, Review
 from .forms import ServiceForm, BookingForm, ReviewForm
@@ -237,6 +239,16 @@ class BookingCreateView(LoginRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        services = Service.objects.filter(is_active=True)
+        context['services'] = services
+        # Přidáme JSON se všemi údaji o službách
+        context['services_json'] = json.dumps({
+            s.pk: {
+                'price': str(s.price),
+                'duration': s.duration,
+                'description': s.description,
+            } for s in services
+        }, cls=DjangoJSONEncoder)
         context['title'] = 'Book a Session'
         context['button_text'] = 'Book Session'
         return context
@@ -260,6 +272,7 @@ class SessionUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['services'] = Service.objects.filter(is_active=True)
         context['title'] = 'Edit Session'
         context['button_text'] = 'Update Session'
         return context

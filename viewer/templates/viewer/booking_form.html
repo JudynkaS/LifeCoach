@@ -19,6 +19,51 @@
 
 {% block form_attrs %}enctype="multipart/form-data" class="needs-validation" novalidate id="booking-form"{% endblock %}
 
+{% block form_fields %}
+    <div class="mb-3">
+        <label for="id_service" class="form-label">Service*</label>
+        <select id="id_service" name="service" class="form-control">
+            <option value="">---------</option>
+            {% for service in services %}
+                <option value="{{ service.pk }}"
+                        data-price="{{ service.price }}"
+                        data-duration="{{ service.duration }}"
+                        data-description="{{ service.description }}"
+                        {% if form.initial.service|stringformat:"s" == service.pk|stringformat:"s" %}selected{% endif %}>
+                    {{ service.name }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+    
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">Service Details</h5>
+            <div class="mb-3">
+                <label for="id_price" class="form-label">Price</label>
+                <input type="text" id="id_price" class="form-control" readonly value="{{ form.initial.price }}">
+            </div>
+            <div class="mb-3">
+                <label for="id_duration" class="form-label">Duration (minutes)</label>
+                <input type="text" id="id_duration" class="form-control" readonly value="{{ form.initial.duration }}">
+            </div>
+            <div class="mb-3">
+                <label for="id_description" class="form-label">Description</label>
+                <textarea id="id_description" class="form-control" rows="3" readonly>{{ form.initial.description }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    {{ form.date_time|as_crispy_field }}
+    {{ form.type|as_crispy_field }}
+    {{ form.notes|as_crispy_field }}
+    <pre>
+DEBUG: service z backendu: {{ form.debug_service }}
+DEBUG: initial.service: {{ form.initial.service }}
+DEBUG: request.GET.service: {{ request.GET.service }}
+    </pre>
+{% endblock %}
+
 {% block form_buttons %}
     <button type="submit" class="btn btn-success btn-lg fw-bold">
         {% if is_edit %}Save Changes{% else %}Book Session{% endif %}
@@ -28,14 +73,36 @@
 
 {% block extra_js %}
 <script>
-// Dynamické přesměrování podle zvolené služby
+const servicesData = {{ services_json|safe }};
 const serviceSelect = document.getElementById('id_service');
+const priceInput = document.getElementById('id_price');
+const durationInput = document.getElementById('id_duration');
+const descriptionInput = document.getElementById('id_description');
+
+function updateServiceInfo() {
+    const selectedId = serviceSelect.value;
+    if (selectedId && servicesData[selectedId]) {
+        priceInput.value = servicesData[selectedId].price;
+        durationInput.value = servicesData[selectedId].duration;
+        descriptionInput.value = servicesData[selectedId].description;
+    } else {
+        priceInput.value = '';
+        durationInput.value = '';
+        descriptionInput.value = '';
+    }
+}
+
 if (serviceSelect) {
     serviceSelect.addEventListener('change', function() {
         const url = new URL(window.location.href);
         url.searchParams.set('service', this.value);
         window.location.href = url.toString();
     });
+    updateServiceInfo();
 }
 </script>
 {% endblock %}
+
+<div class="container d-flex justify-content-center align-items-start page-container">
+    <div class="col-12 col-md-10 col-lg-7 col-xl-6 page-content">
+        <div class="card page-card p-4">

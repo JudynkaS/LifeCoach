@@ -40,11 +40,17 @@ class ReviewForm(BaseStyledForm):
 
 class BookingForm(BaseStyledForm):
     date_time = forms.ChoiceField(label='Date time*', choices=[], widget=forms.Select())
+    duration = forms.IntegerField(label='Duration (minutes)', widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+    price = forms.DecimalField(label='Price', widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+    description = forms.CharField(label='Service Description', widget=forms.Textarea(attrs={'readonly': 'readonly', 'rows': 3}))
+    debug_service = None  # pro debugování
+    
     class Meta:
         model = Session
         fields = ['service', 'date_time', 'duration', 'type', 'notes']
         widgets = {
             'notes': forms.Textarea(attrs={'rows': 3}),
+            'duration': forms.TextInput(attrs={'readonly': 'readonly'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -53,6 +59,16 @@ class BookingForm(BaseStyledForm):
         if 'initial' in kwargs and 'date_time' in kwargs['initial']:
             initial_date_time = kwargs['initial']['date_time']
         super().__init__(*args, **kwargs)
+        
+        self.fields['service'].widget.attrs.update({
+            'onchange': 'updateServiceDetails(this.value)',
+            'class': 'form-control'
+        })
+        
+        # DEBUG: Uložím hodnotu service pro výpis do šablony
+        service = self.initial.get('service') or self.data.get('service')
+        self.debug_service = service
+        
         if self.user and hasattr(self.user, 'profile'):
             if self.user.profile.is_coach:
                 self.fields['service'].queryset = Service.objects.filter(
@@ -64,10 +80,13 @@ class BookingForm(BaseStyledForm):
                 self.fields['service'].queryset = Service.objects.filter(
                     is_active=True
                 )
-                service = self.initial.get('service') or self.data.get('service')
                 if service:
                     try:
-                        service_obj = Service.objects.get(pk=service)
+                        service_obj = Service.objects.get(pk=int(service))
+                        self.initial['duration'] = service_obj.duration
+                        self.initial['price'] = service_obj.price
+                        self.initial['description'] = service_obj.description
+                        self.initial['type'] = service_obj.session_type
                         today = timezone.now().date()
                         slots = []
                         booked_sessions = Session.objects.filter(

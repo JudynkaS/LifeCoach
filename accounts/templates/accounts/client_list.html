@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Clients{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4">Clients</h2>
+    <div class="row">
+        {% for client in clients %}
+        <div class="col-md-6 col-lg-4 mb-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{ client.user.get_full_name }}</h5>
+                    <p class="mb-1"><strong>Email:</strong> {{ client.user.email }}</p>
+                    <p class="mb-1"><strong>Phone:</strong> {{ client.phone }}</p>
+                    <a href="{% url 'accounts:client_detail' client.pk %}" class="btn btn-outline-primary btn-sm">Detail</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p>No clients found.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 
