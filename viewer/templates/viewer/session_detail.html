@@ -16,6 +16,34 @@
                         <tr><th>Date and Time:</th><td>{{ session.date_time|timezone:request.user.profile.timezone|date:"F j, Y, g:i a" }} <br><small class="text-muted">(Time zone: {{ request.user.profile.timezone }})</small></td></tr>
                         <tr><th>Duration:</th><td>{{ session.duration }} minutes</td></tr>
                         <tr><th>Type:</th><td>{{ session.get_type_display }}</td></tr>
+                        {% if session.meeting_url %}
+                        <tr><th>Online Meeting Link:</th><td><a href="{{ session.meeting_url }}" target="_blank">{{ session.meeting_url }}</a></td></tr>
+                        {% endif %}
+                        {% if session.meeting_address %}
+                        <tr><th>Meeting Address:</th><td>{{ session.meeting_address }}</td></tr>
+                        {% endif %}
+                        <tr>
+                            <th>Payment:</th>
+                            <td>
+                                {% with payment=session.payments.first %}
+                                    {% if payment %}
+                                        {% if payment.paid_at %}
+                                            <span class="badge bg-success">PAID</span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">NOT PAID</span>
+                                            <form id="paypal-form" class="d-inline ms-2">
+                                                {% csrf_token %}
+                                                <button type="button" id="paypal-btn" class="btn btn-primary btn-sm">
+                                                    PayPal
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                        </tr>
                         <tr>
                             <th>Status:</th>
                             <td>
@@ -55,4 +83,33 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const paypalBtn = document.getElementById('paypal-btn');
+    if (paypalBtn) {
+        paypalBtn.addEventListener('click', function() {
+            fetch("/api/paypal/create-order/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: `session_id={{ session.id }}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.approval_url) {
+                    window.location.href = data.approval_url;
+                } else {
+                    alert("PayPal error: " + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(err => alert("PayPal error: " + err));
+        });
+    }
+});
+</script>
 {% endblock %} 

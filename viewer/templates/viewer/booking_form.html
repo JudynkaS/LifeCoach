@@ -57,11 +57,9 @@
     {{ form.date_time|as_crispy_field }}
     {{ form.type|as_crispy_field }}
     {{ form.notes|as_crispy_field }}
-    <pre>
-DEBUG: service z backendu: {{ form.debug_service }}
-DEBUG: initial.service: {{ form.initial.service }}
-DEBUG: request.GET.service: {{ request.GET.service }}
-    </pre>
+    {{ form.meeting_url|as_crispy_field }}
+    {{ form.meeting_address|as_crispy_field }}
+    {{ form.payment_method|as_crispy_field }}
 {% endblock %}
 
 {% block form_buttons %}

@@ -22,40 +22,108 @@
                 {% endif %}
                 {% if upcoming_sessions %}
                     <h2 class="h4 section-title mb-3">Upcoming Sessions</h2>
-                    <div class="row g-3 mb-4">
+                    <table class="table table-hover mb-4">
+                        <thead>
+                            <tr>
+                                <th>Service</th>
+                                {% if user.profile.is_coach %}<th>Client</th>{% endif %}
+                                <th>Date and Time</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Meeting</th>
+                                <th>Payment</th>
+                                {% if user.profile.is_coach %}<th>Paid</th>{% endif %}
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
                         {% for session in upcoming_sessions %}
-                        <div class="col-md-6 col-lg-6">
-                            <div class="card h-100 shadow-sm border-0 rounded-4">
-                                <div class="card-body text-center p-4">
-                                    <h5 class="card-title">{{ session.service.name }}</h5>
-                                    <p class="card-text mb-1">{{ session.date_time|timezone:request.user.profile.timezone|date:"F j, Y H:i" }}</p>
-                                    <p class="card-text mb-1">{{ session.get_type_display }}</p>
-                                    <a href="{% url 'viewer:session_detail' session.id %}" class="btn btn-outline-primary btn-sm">Detail</a>
-                                </div>
-                            </div>
-                        </div>
+                            <tr>
+                                <td>{{ session.service.name }}</td>
+                                {% if user.profile.is_coach %}<td>{{ session.client.user.get_full_name|default:session.client.user.username }}</td>{% endif %}
+                                <td>{{ session.date_time|timezone:request.user.profile.timezone|date:"F j, Y H:i" }}</td>
+                                <td>{{ session.get_type_display }}</td>
+                                <td>
+                                    {% if session.status|lower == 'confirmed' %}
+                                        <span class="badge bg-success">{{ session.status|title }}</span>
+                                    {% elif session.status|lower == 'pending' %}
+                                        <span class="badge bg-warning text-dark">{{ session.status|title }}</span>
+                                    {% elif session.status|lower == 'cancelled' %}
+                                        <span class="badge bg-danger">{{ session.status|title }}</span>
+                                    {% else %}
+                                        {{ session.status|title }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if session.type == 'online' and session.meeting_url %}
+                                        <a href="{{ session.meeting_url }}" target="_blank">Online link</a>
+                                    {% elif session.type == 'personal' and session.meeting_address %}
+                                        {{ session.meeting_address }}
+                                    {% endif %}
+                                </td>
+                                <td>{% with payment=session.payments.first %}{% if payment %}{{ payment.payment_method.name }}{% else %}-{% endif %}{% endwith %}</td>
+                                {% if user.profile.is_coach %}
+                                    <td>{% with payment=session.payments.first %}{% if payment and payment.paid_at %}<span class="badge bg-success">Paid</span>{% else %}<span class="badge bg-warning text-dark">Not Paid</span>{% endif %}{% endwith %}</td>
+                                {% endif %}
+                                <td><a href="{% url 'viewer:session_detail' session.id %}" class="btn btn-outline-primary btn-sm">Detail</a></td>
+                            </tr>
                         {% endfor %}
-                    </div>
+                        </tbody>
+                    </table>
                 {% else %}
                     <p class="text-center text-muted">No upcoming sessions.</p>
                 {% endif %}
                 <h2 class="h4 section-title mb-3">Past Sessions</h2>
-                <div class="row g-3">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Service</th>
+                            {% if user.profile.is_coach %}<th>Client</th>{% endif %}
+                            <th>Date and Time</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Meeting</th>
+                            <th>Payment</th>
+                            {% if user.profile.is_coach %}<th>Paid</th>{% endif %}
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
                     {% for session in past_sessions %}
-                    <div class="col-md-6 col-lg-6">
-                        <div class="card h-100 shadow-sm border-0 rounded-4">
-                            <div class="card-body text-center p-4">
-                                <h5 class="card-title">{{ session.service.name }}</h5>
-                                <p class="card-text mb-1">{{ session.date_time|timezone:request.user.profile.timezone|date:"F j, Y H:i" }}</p>
-                                <p class="card-text mb-1">{{ session.get_type_display }}</p>
-                                <a href="{% url 'viewer:session_detail' session.id %}" class="btn btn-outline-primary btn-sm">Detail</a>
-                            </div>
-                        </div>
-                    </div>
+                        <tr>
+                            <td>{{ session.service.name }}</td>
+                            {% if user.profile.is_coach %}<td>{{ session.client.user.get_full_name|default:session.client.user.username }}</td>{% endif %}
+                            <td>{{ session.date_time|timezone:request.user.profile.timezone|date:"F j, Y H:i" }}</td>
+                            <td>{{ session.get_type_display }}</td>
+                            <td>
+                                {% if session.status|lower == 'confirmed' %}
+                                    <span class="badge bg-success">{{ session.status|title }}</span>
+                                {% elif session.status|lower == 'pending' %}
+                                    <span class="badge bg-warning text-dark">{{ session.status|title }}</span>
+                                {% elif session.status|lower == 'cancelled' %}
+                                    <span class="badge bg-danger">{{ session.status|title }}</span>
+                                {% else %}
+                                    {{ session.status|title }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if session.type == 'online' and session.meeting_url %}
+                                    <a href="{{ session.meeting_url }}" target="_blank">Online link</a>
+                                {% elif session.type == 'personal' and session.meeting_address %}
+                                    {{ session.meeting_address }}
+                                {% endif %}
+                            </td>
+                            <td>{% with payment=session.payments.first %}{% if payment %}{{ payment.payment_method.name }}{% else %}-{% endif %}{% endwith %}</td>
+                            {% if user.profile.is_coach %}
+                                <td>{% with payment=session.payments.first %}{% if payment and payment.paid_at %}<span class="badge bg-success">Paid</span>{% else %}<span class="badge bg-warning text-dark">Not Paid</span>{% endif %}{% endwith %}</td>
+                            {% endif %}
+                            <td><a href="{% url 'viewer:session_detail' session.id %}" class="btn btn-outline-primary btn-sm">Detail</a></td>
+                        </tr>
                     {% empty %}
-                    <p class="text-center text-muted">No past sessions.</p>
+                        <tr><td colspan="{% if user.profile.is_coach %}8{% else %}5{% endif %}" class="text-center text-muted">No past sessions.</td></tr>
                     {% endfor %}
-                </div>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

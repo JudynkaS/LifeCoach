@@ -19,10 +19,10 @@ A web application for coaching and psychological counseling.
 
 - [x] 2 Booking system (`feature/booking-system`)
   - [x] Ability to book appointments (US time, EU) 
-    - [x] Personal or online session
     - [x] Time slot selection
     - [x] Service selection
   - [x] View available slots 
+  - [x] Confirmation - coach
   - [x] Cancel or reschedule sessions 
     - [x] More than 24 hours in advance – allowed
     - [x] Less than 24 hours – admin only
@@ -33,9 +33,7 @@ A web application for coaching and psychological counseling.
   - [x] Price list
 
 - [ ] 4 Payment integration (`feature/payment-integration`)
-  - [ ] PayPal (`feature/paypal-integration`)
-  - [ ] Venmo (`feature/venmo-integration`)
-  - [ ] Cash (`feature/cash-payment-handling`)
+  - [x] PayPal 
 
 - [ ] 5 Session Feedback (`feature/session-feedback`)
   - [ ] Rating system after completed session

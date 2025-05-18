@@ -16,4 +16,7 @@ urlpatterns = [
     path('sessions/<int:pk>/cancel/', views.SessionCancelView.as_view(), name='cancel_session'),
     path('booking/create/', views.BookingCreateView.as_view(), name='booking_create'),
     path('sessions/<int:pk>/review/', views.ReviewCreateView.as_view(), name='create-review'),
+    path('api/paypal/create-order/', views.CreatePayPalOrderView.as_view(), name='paypal_create_order'),
+    path('paypal/return/<int:session_id>/', views.PayPalReturnView.as_view(), name='paypal_return'),
+    path('paypal/cancel/<int:session_id>/', views.PayPalCancelView.as_view(), name='paypal_cancel'),
 ]

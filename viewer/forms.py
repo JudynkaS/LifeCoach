@@ -2,7 +2,7 @@ from django import forms
 from django.utils import timezone
 
 import datetime
-from viewer.models import Session, Service, Review
+from viewer.models import Session, Service, Review, PaymentMethod
 
 class BaseStyledForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -14,10 +14,12 @@ class BaseStyledForm(forms.ModelForm):
 class SessionForm(BaseStyledForm):
     class Meta:
         model = Session
-        fields = ['coach', 'service', 'date_time', 'type', 'notes']
+        fields = ['coach', 'service', 'date_time', 'type', 'notes', 'meeting_url', 'meeting_address']
         widgets = {
             'date_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
             'notes': forms.Textarea(attrs={'rows': 4}),
+            'meeting_url': forms.URLInput(attrs={'placeholder': 'https://...'}),
+            'meeting_address': forms.TextInput(attrs={'placeholder': 'Address for personal session'}),
         }
 
 class ServiceForm(BaseStyledForm):
@@ -43,6 +45,7 @@ class BookingForm(BaseStyledForm):
     duration = forms.IntegerField(label='Duration (minutes)', widget=forms.TextInput(attrs={'readonly': 'readonly'}))
     price = forms.DecimalField(label='Price', widget=forms.TextInput(attrs={'readonly': 'readonly'}))
     description = forms.CharField(label='Service Description', widget=forms.Textarea(attrs={'readonly': 'readonly', 'rows': 3}))
+    payment_method = forms.ModelChoiceField(queryset=None, label='Payment Method*')
     debug_service = None  # pro debugování
     
     class Meta:
@@ -119,6 +122,9 @@ class BookingForm(BaseStyledForm):
                 else:
                     self.fields['date_time'].choices = [("", "Please select a service first")]
                     self.fields['date_time'].widget.attrs['disabled'] = 'disabled'
+
+        from viewer.models import PaymentMethod
+        self.fields['payment_method'].queryset = PaymentMethod.objects.all()
 
     def clean_date_time(self):
         date_time_str = self.cleaned_data.get('date_time')
