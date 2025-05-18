@@ -4,12 +4,16 @@ from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.utils import timezone
 from django.contrib import messages
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadRequest
 from django.core.serializers.json import DjangoJSONEncoder
 import json
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+import requests
+import os
 
-from .models import Session, Service, Profile, Review
-from .forms import ServiceForm, BookingForm, ReviewForm
+from .models import Session, Service, Profile, Review, Payment
+from .forms import ServiceForm, BookingForm, ReviewForm, SessionForm
 from .utils.google_calendar import create_coach_calendar_event, delete_coach_calendar_event
 
 class HomeView(TemplateView):
@@ -33,31 +37,25 @@ class SessionHistoryView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         user_profile = self.request.user.profile
         now = timezone.now()
-        
-        # Add upcoming and past sessions
+        # Nadcházející sessions (všechny statusy)
         if user_profile.is_coach:
             context['upcoming_sessions'] = Session.objects.filter(
                 coach=user_profile,
-                date_time__gt=now,
-                status='CONFIRMED'
-            ).order_by('date_time')  # Seřazeno od nejbližšího termínu
-            
+                date_time__gt=now
+            ).order_by('date_time')
             context['past_sessions'] = Session.objects.filter(
                 coach=user_profile,
                 date_time__lte=now
-            ).order_by('-date_time')  # Seřazeno od nejnovějšího
+            ).order_by('-date_time')
         else:
             context['upcoming_sessions'] = Session.objects.filter(
                 client=user_profile,
-                date_time__gt=now,
-                status='CONFIRMED'
-            ).order_by('date_time')  # Seřazeno od nejbližšího termínu
-            
+                date_time__gt=now
+            ).order_by('date_time')
             context['past_sessions'] = Session.objects.filter(
                 client=user_profile,
                 date_time__lte=now
-            ).order_by('-date_time')  # Seřazeno od nejnovějšího
-        
+            ).order_by('-date_time')
         return context
 
 
@@ -211,6 +209,9 @@ class BookingCreateView(LoginRequiredMixin, CreateView):
         form.instance.client = self.request.user.profile
         service = form.instance.service
         coach_user = service.coach
+        form.instance.status = 'PENDING'
+        form.instance.duration = service.duration
+        form.instance.type = service.session_type  # Nastaví typ podle servisu
         try:
             coach_profile = Profile.objects.get(user=coach_user)
             form.instance.coach = coach_profile
@@ -234,7 +235,12 @@ class BookingCreateView(LoginRequiredMixin, CreateView):
             print(f"Google Calendar error: {e}")
             messages.warning(self.request, f'Session booked, but failed to create Google Calendar event: {str(e)}')
         response = super().form_valid(form)
-        # Redirect na session_history po úspěšném vytvoření
+        # Vytvoření platby
+        Payment.objects.create(
+            session=self.object,
+            amount=service.price,
+            payment_method=form.cleaned_data['payment_method']
+        )
         return HttpResponseRedirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
@@ -255,20 +261,33 @@ class BookingCreateView(LoginRequiredMixin, CreateView):
 
 class SessionUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Session
-    form_class = BookingForm  # nebo vlastní SessionForm, pokud máš
+    form_class = SessionForm
     template_name = 'viewer/booking_form.html'
     success_url = reverse_lazy('viewer:session_history')
 
     def test_func(self):
         session = self.get_object()
         user = self.request.user
+        # Kouč nebo admin může potvrdit, klient může editovat pouze před potvrzením
+        if user.profile.is_coach or user.is_superuser:
+            return True
+        return user.profile == session.client and session.status != 'CONFIRMED'
 
-        # Pokud je do začátku session více než 24 hodin, může editovat klient, kouč i admin
-        if (session.date_time - timezone.now()).total_seconds() > 24 * 60 * 60:
-            return user.profile == session.client or user.profile == session.coach or user.is_superuser
-
-        # Pokud je do začátku méně než 24 hodin, může editovat pouze kouč nebo admin
-        return user.profile == session.coach or user.is_superuser
+    def form_valid(self, form):
+        session = form.instance
+        # Validace meeting_url/adresa
+        if session.type == 'online' and not session.meeting_url:
+            form.add_error('meeting_url', 'Online session must have a meeting link.')
+            return self.form_invalid(form)
+        if session.type == 'personal' and not session.meeting_address:
+            form.add_error('meeting_address', 'Personal session must have an address.')
+            return self.form_invalid(form)
+        # Potvrzení session (status na CONFIRMED) pouze koučem a pokud je zaplaceno
+        if self.request.user.profile.is_coach and session.status == 'PENDING':
+            payment = session.payments.first()
+            if payment and payment.paid_at:
+                session.status = 'CONFIRMED'
+        return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -321,3 +340,110 @@ class ReviewCreateView(LoginRequiredMixin, CreateView):
 
 def home(request):
     return render(request, 'home.html')
+
+class CreatePayPalOrderView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        session_id = request.POST.get('session_id')
+        if not session_id:
+            return HttpResponseBadRequest('Missing session_id')
+        try:
+            session = Session.objects.get(pk=session_id)
+            payment = session.payments.first()
+            if not payment:
+                return HttpResponseBadRequest('No payment found for this session')
+        except Session.DoesNotExist:
+            return HttpResponseBadRequest('Session not found')
+
+        # PayPal credentials from .env
+        PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID')
+        PAYPAL_CLIENT_SECRET = os.environ.get('PAYPAL_CLIENT_SECRET')
+        PAYPAL_API_BASE = 'https://api-m.sandbox.paypal.com'  # change to live for production
+
+        # Get access token
+        auth_response = requests.post(
+            f'{PAYPAL_API_BASE}/v1/oauth2/token',
+            auth=(PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET),
+            data={'grant_type': 'client_credentials'},
+        )
+        if auth_response.status_code != 200:
+            return JsonResponse({'error': 'PayPal auth failed'}, status=500)
+        access_token = auth_response.json()['access_token']
+
+        # Create order
+        order_data = {
+            "intent": "CAPTURE",
+            "purchase_units": [
+                {
+                    "amount": {
+                        "currency_code": payment.payment_method.name.upper() if payment.payment_method.name.upper() in ["USD", "EUR", "CZK"] else "USD",
+                        "value": str(payment.amount)
+                    },
+                    "description": f"Session: {session.service.name} ({session.date_time})"
+                }
+            ],
+            "application_context": {
+                "brand_name": "LifeCoach",
+                "locale": "en-US",
+                "return_url": request.build_absolute_uri(f'/paypal/return/{session.id}/'),
+                "cancel_url": request.build_absolute_uri(f'/paypal/cancel/{session.id}/'),
+                "user_action": "PAY_NOW"
+            }
+        }
+        order_response = requests.post(
+            f'{PAYPAL_API_BASE}/v2/checkout/orders',
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {access_token}'
+            },
+            json=order_data
+        )
+        if order_response.status_code != 201:
+            return JsonResponse({'error': 'PayPal order creation failed', 'details': order_response.json()}, status=500)
+        order = order_response.json()
+        approval_url = next((l['href'] for l in order['links'] if l['rel'] == 'approve'), None)
+        if not approval_url:
+            return JsonResponse({'error': 'No approval url from PayPal'}, status=500)
+        # Optionally save order_id to payment
+        payment.transaction_id = order['id']
+        payment.save()
+        return JsonResponse({'approval_url': approval_url})
+
+class PayPalReturnView(LoginRequiredMixin, View):
+    def get(self, request, session_id):
+        from django.contrib import messages
+        session = Session.objects.get(pk=session_id)
+        payment = session.payments.first()
+        order_id = payment.transaction_id
+        # PayPal credentials
+        PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID')
+        PAYPAL_CLIENT_SECRET = os.environ.get('PAYPAL_CLIENT_SECRET')
+        PAYPAL_API_BASE = 'https://api-m.sandbox.paypal.com'
+        # Get access token
+        auth_response = requests.post(
+            f'{PAYPAL_API_BASE}/v1/oauth2/token',
+            auth=(PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET),
+            data={'grant_type': 'client_credentials'},
+        )
+        access_token = auth_response.json()['access_token']
+        # Get order details
+        order_response = requests.get(
+            f'{PAYPAL_API_BASE}/v2/checkout/orders/{order_id}',
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {access_token}'
+            }
+        )
+        order = order_response.json()
+        if order.get('status') == 'COMPLETED' or order.get('status') == 'APPROVED':
+            payment.paid_at = timezone.now()
+            payment.save()
+            messages.success(request, 'Payment successful!')
+        else:
+            messages.warning(request, 'Payment not completed. Please try again.')
+        return redirect('viewer:session_detail', pk=session_id)
+
+class PayPalCancelView(LoginRequiredMixin, View):
+    def get(self, request, session_id):
+        from django.contrib import messages
+        messages.warning(request, 'Payment was cancelled.')
+        return redirect('viewer:session_detail', pk=session_id)

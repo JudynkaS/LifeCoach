@@ -73,6 +73,7 @@ class Session(models.Model):
         ('CANCELLED', 'Cancelled'),
         ('CONFIRMED', 'Confirmed'),
         ('CHANGED', 'Changed'),
+        ('PENDING', 'Pending'),
     ]
 
     client = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='client_sessions')
@@ -81,11 +82,13 @@ class Session(models.Model):
     date_time = models.DateTimeField()
     duration = models.IntegerField(help_text='Duration in minutes')
     type = models.CharField(max_length=10, choices=SESSION_TYPES, default='online')
-    status = models.CharField(max_length=20, choices=SESSION_STATUS, default='CONFIRMED')
+    status = models.CharField(max_length=20, choices=SESSION_STATUS, default='PENDING')
     notes = models.TextField(blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     google_calendar_event_id = models.CharField(max_length=255, blank=True, null=True)
+    meeting_url = models.URLField(blank=True, null=True, help_text='Link for online session (Zoom, Meet, etc.)')
+    meeting_address = models.CharField(max_length=255, blank=True, null=True, help_text='Address for personal session')
 
     class Meta:
         ordering = ['-date_time']
@@ -110,6 +113,7 @@ class Payment(models.Model):
     amount = DecimalField(max_digits=10, decimal_places=2)
     payment_method = models.ForeignKey('viewer.PaymentMethod', on_delete=models.CASCADE)
     paid_at = DateTimeField(null=True, blank=True)
+    transaction_id = models.CharField(max_length=100, blank=True, null=True)  # PayPal order ID
     created = DateTimeField(auto_now_add=True)
     updated = DateTimeField(auto_now=True)
 
