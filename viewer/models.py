@@ -92,6 +92,18 @@ class Session(models.Model):
 
     class Meta:
         ordering = ['-date_time']
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(status__in=['CANCELLED', 'CONFIRMED', 'CHANGED', 'PENDING']),
+                name='valid_session_status'
+            ),
+            # Add a unique constraint for coach's time slots
+            models.UniqueConstraint(
+                fields=['coach', 'date_time'],
+                condition=models.Q(status__in=['CONFIRMED', 'PENDING']),
+                name='unique_coach_time_slot'
+            )
+        ]
 
     def __str__(self):
         return f"{self.service.name} - {self.date_time}"

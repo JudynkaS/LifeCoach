@@ -3,6 +3,7 @@ from django.db import models
 from django.db.models import Model, OneToOneField, CASCADE, DateField, \
     TextField, ManyToManyField
 import pytz
+from django.core.exceptions import ValidationError
 
 CONTACT_CHOICES = [
     ('email', 'Email'),
@@ -79,12 +80,10 @@ class Profile(Model):
     is_client = models.BooleanField(default=True)
     
     # Fields for specialization and goals
-    specialization = models.CharField(
-        max_length=50,
-        choices=SPECIALIZATION_CHOICES,
+    specialization = models.TextField(
         null=True,
         blank=True,
-        verbose_name='Specialization Category'
+        verbose_name='Specialization'
     )
     goals = models.CharField(
         max_length=255,
@@ -119,18 +118,23 @@ class Profile(Model):
 
     # Consent
     therapy_consent = models.BooleanField(default=False)
+    hypnotherapy_consent = models.BooleanField(default=False)
 
     # Google refresh token
     google_refresh_token = models.CharField(max_length=255, blank=True, null=True)
 
-    class Meta:
-        ordering = ['user__username']
+    def clean(self):
+        if self.is_coach and self.is_client:
+            raise ValidationError("A profile cannot be both a coach and a client")
+        if not self.is_coach and not self.is_client:
+            raise ValidationError("A profile must be either a coach or a client")
 
-    def __repr__(self):
-        return f"Profile(user={self.user})"
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return self.user.username
+        return f"{self.user.get_full_name() or self.user.username} - {'Coach' if self.is_coach else 'Client'}"
 
     def get_timezone(self):
         return pytz.timezone(self.timezone)
@@ -149,12 +153,13 @@ class Profile(Model):
 
     def generate_bio(self):
         """Generates bio based on specialization and goals."""
+        if self.is_coach:
+            # Pro kouče vracíme bio jako volný text (nepoužíváme slovník)
+            return self.bio or self.specialization or ""
         parts = []
-        
         if self.specialization:
             spec_dict = dict(SPECIALIZATION_CHOICES)
             parts.append(f"I specialize in {spec_dict[self.specialization].lower()}.")
-        
         goals = self.get_goals_list()
         if goals:
             goals_dict = dict(GOALS_CHOICES)
@@ -162,7 +167,6 @@ class Profile(Model):
             if goal_names:
                 goals_text = ", ".join(goal_names[:-1] + [f"and {goal_names[-1]}"] if len(goal_names) > 1 else goal_names)
                 parts.append(f"My goal is to help clients with: {goals_text}.")
-        
         return " ".join(parts) if parts else ""
 
     def get_medical_conditions(self):

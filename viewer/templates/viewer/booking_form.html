@@ -1,106 +1,117 @@
-{% extends 'base_form.html' %}
+{% extends 'base.html' %}
 {% load crispy_forms_tags %}
 {% load static %}
 
 {% block title %}Book a Session{% endblock %}
 
-{% block form_title %}
-    {% if is_edit %}Edit Session{% else %}Book a Session{% endif %}
-{% endblock %}
-
-{% block form_header %}
-    {% if user.profile.is_coach %}
-        <div class="alert alert-info text-center mb-0">
-            <i class="fas fa-info-circle me-2"></i>
-            As a coach, you cannot book sessions. You can only receive bookings from clients.
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8 col-xl-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h3 class="h4 mb-0 text-center text-success">{% if is_edit %}Edit Session{% else %}Book a Session{% endif %}</h3>
+                </div>
+                <div class="card-body p-4">
+                    {% if user.profile.is_coach and not is_edit %}
+                        <div class="alert alert-info text-center mb-4">
+                            <i class="fas fa-info-circle me-2"></i>
+                            As a coach, you cannot book sessions. You can only receive bookings from clients.
+                        </div>
+                    {% endif %}
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate id="booking-form">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ form.service.label_tag }}
+                            {{ form.service }}
+                            {% if form.service.errors %}<div class="text-danger small">{{ form.service.errors }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.duration.label_tag }}
+                            {{ form.duration }}
+                            {% if form.duration.errors %}<div class="text-danger small">{{ form.duration.errors }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.price.label_tag }}
+                            {{ form.price }}
+                            {% if form.price.errors %}<div class="text-danger small">{{ form.price.errors }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.description.label_tag }}
+                            {{ form.description }}
+                            {% if form.description.errors %}<div class="text-danger small">{{ form.description.errors }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.notes.label_tag }}
+                            {{ form.notes }}
+                            {% if form.notes.errors %}<div class="text-danger small">{{ form.notes.errors }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.payment_method.label_tag }}
+                            {{ form.payment_method }}
+                            {% if form.payment_method.errors %}<div class="text-danger small">{{ form.payment_method.errors }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.type.label_tag }}
+                            <input type="hidden" name="type" id="id_type" value="{{ form.type.value|default:'' }}">
+                            <input type="text" class="form-control" value="{{ form.type.value|default:'' }}" readonly>
+                            {% if form.type.errors %}<div class="text-danger small">{{ form.type.errors }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3" id="meeting-url-group" style="display:none;">
+                            {{ form.meeting_url.label_tag }}
+                            {{ form.meeting_url }}
+                            {% if form.meeting_url.errors %}<div class="text-danger small">{{ form.meeting_url.errors }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3" id="meeting-address-group" style="display:none;">
+                            {{ form.meeting_address.label_tag }}
+                            {{ form.meeting_address }}
+                            {% if form.meeting_address.errors %}<div class="text-danger small">{{ form.meeting_address.errors }}</div>{% endif %}
+                        </div>
+                        <div id="service-details" class="mb-3"></div>
+                        <div id="date-time-container" class="mb-3"></div>
+                        <div class="d-grid gap-2 mt-4">
+                            {% if form.errors %}
+                                <div class="alert alert-danger">{{ form.errors }}</div>
+                            {% endif %}
+                            <button type="submit" class="btn btn-success py-3 fw-bold">
+                                <i class="fas fa-save me-2"></i>
+                                {% if user.profile.is_coach and is_edit and session.status in 'PENDING,CHANGED' %}
+                                    Confirm Session
+                                {% elif is_edit %}
+                                    Save Changes
+                                {% else %}
+                                    Book Session
+                                {% endif %}
+                            </button>
+                            <a href="{% url 'viewer:session_history' %}" class="btn btn-outline-secondary fw-bold">
+                                Back to Session History
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-    {% endif %}
-{% endblock %}
-
-{% block form_attrs %}enctype="multipart/form-data" class="needs-validation" novalidate id="booking-form"{% endblock %}
-
-{% block form_fields %}
-    <div class="mb-3">
-        <label for="id_service" class="form-label">Service*</label>
-        <select id="id_service" name="service" class="form-control">
-            <option value="">---------</option>
-            {% for service in services %}
-                <option value="{{ service.pk }}"
-                        data-price="{{ service.price }}"
-                        data-duration="{{ service.duration }}"
-                        data-description="{{ service.description }}"
-                        {% if form.initial.service|stringformat:"s" == service.pk|stringformat:"s" %}selected{% endif %}>
-                    {{ service.name }}
-                </option>
-            {% endfor %}
-        </select>
     </div>
-    
-    <div class="card mb-3">
-        <div class="card-body">
-            <h5 class="card-title">Service Details</h5>
-            <div class="mb-3">
-                <label for="id_price" class="form-label">Price</label>
-                <input type="text" id="id_price" class="form-control" readonly value="{{ form.initial.price }}">
-            </div>
-            <div class="mb-3">
-                <label for="id_duration" class="form-label">Duration (minutes)</label>
-                <input type="text" id="id_duration" class="form-control" readonly value="{{ form.initial.duration }}">
-            </div>
-            <div class="mb-3">
-                <label for="id_description" class="form-label">Description</label>
-                <textarea id="id_description" class="form-control" rows="3" readonly>{{ form.initial.description }}</textarea>
-            </div>
-        </div>
-    </div>
-
-    {{ form.date_time|as_crispy_field }}
-    {{ form.type|as_crispy_field }}
-    {{ form.notes|as_crispy_field }}
-    {{ form.meeting_url|as_crispy_field }}
-    {{ form.meeting_address|as_crispy_field }}
-    {{ form.payment_method|as_crispy_field }}
-{% endblock %}
-
-{% block form_buttons %}
-    <button type="submit" class="btn btn-success btn-lg fw-bold">
-        {% if is_edit %}Save Changes{% else %}Book Session{% endif %}
-    </button>
-    <a href="{% url 'viewer:session_history' %}" class="btn btn-secondary btn-lg fw-bold">Cancel</a>
-{% endblock %}
-
-{% block extra_js %}
+</div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{% static 'js/booking.js' %}"></script>
 <script>
-const servicesData = {{ services_json|safe }};
-const serviceSelect = document.getElementById('id_service');
-const priceInput = document.getElementById('id_price');
-const durationInput = document.getElementById('id_duration');
-const descriptionInput = document.getElementById('id_description');
-
-function updateServiceInfo() {
-    const selectedId = serviceSelect.value;
-    if (selectedId && servicesData[selectedId]) {
-        priceInput.value = servicesData[selectedId].price;
-        durationInput.value = servicesData[selectedId].duration;
-        descriptionInput.value = servicesData[selectedId].description;
-    } else {
-        priceInput.value = '';
-        durationInput.value = '';
-        descriptionInput.value = '';
+$(function() {
+    function toggleMeetingFields() {
+        var type = $('#id_type').val();
+        if (type === 'online') {
+            $('#meeting-url-group').show();
+            $('#meeting-address-group').hide();
+        } else if (type === 'personal') {
+            $('#meeting-url-group').hide();
+            $('#meeting-address-group').show();
+        } else {
+            $('#meeting-url-group').hide();
+            $('#meeting-address-group').hide();
+        }
     }
-}
-
-if (serviceSelect) {
-    serviceSelect.addEventListener('change', function() {
-        const url = new URL(window.location.href);
-        url.searchParams.set('service', this.value);
-        window.location.href = url.toString();
-    });
-    updateServiceInfo();
-}
+    $('#id_type').on('change input', toggleMeetingFields);
+    toggleMeetingFields();
+});
 </script>
 {% endblock %}
-
-<div class="container d-flex justify-content-center align-items-start page-container">
-    <div class="col-12 col-md-10 col-lg-7 col-xl-6 page-content">
-        <div class="card page-card p-4">

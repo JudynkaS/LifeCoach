@@ -5,81 +5,133 @@
 {% block title %}Session Details{% endblock %}
 
 {% block content %}
-<div class="container py-4">
+<div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-12 col-lg-8">
-            <div class="card page-card">
-                <div class="card-body text-center">
-                    <h1 class="mb-4 text-primary-green page-title">Session Details</h1>
-                    <table class="table table-borderless mb-4 w-auto mx-auto">
-                        <tr><th>Service:</th><td>{{ session.service.name }}</td></tr>
-                        <tr><th>Date and Time:</th><td>{{ session.date_time|timezone:request.user.profile.timezone|date:"F j, Y, g:i a" }} <br><small class="text-muted">(Time zone: {{ request.user.profile.timezone }})</small></td></tr>
-                        <tr><th>Duration:</th><td>{{ session.duration }} minutes</td></tr>
-                        <tr><th>Type:</th><td>{{ session.get_type_display }}</td></tr>
-                        {% if session.meeting_url %}
-                        <tr><th>Online Meeting Link:</th><td><a href="{{ session.meeting_url }}" target="_blank">{{ session.meeting_url }}</a></td></tr>
-                        {% endif %}
-                        {% if session.meeting_address %}
-                        <tr><th>Meeting Address:</th><td>{{ session.meeting_address }}</td></tr>
-                        {% endif %}
-                        <tr>
-                            <th>Payment:</th>
-                            <td>
-                                {% with payment=session.payments.first %}
-                                    {% if payment %}
-                                        {% if payment.paid_at %}
-                                            <span class="badge bg-success">PAID</span>
-                                        {% else %}
-                                            <span class="badge bg-warning text-dark">NOT PAID</span>
-                                            <form id="paypal-form" class="d-inline ms-2">
-                                                {% csrf_token %}
-                                                <button type="button" id="paypal-btn" class="btn btn-primary btn-sm">
-                                                    PayPal
-                                                </button>
-                                            </form>
-                                        {% endif %}
+        <div class="col-12 col-md-10 col-lg-8 col-xl-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h3 class="h4 mb-0 text-center text-success">Session Details</h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="table-responsive">
+                        <table class="table table-borderless mb-4 w-auto mx-auto">
+                            <tr><th>Service:</th><td>{{ session.service.name }}</td></tr>
+                            <tr><th>Date and Time:</th><td>{{ session.date_time|timezone:request.user.profile.timezone|date:"F j, Y, g:i a" }} <br><small class="text-muted">(Time zone: {{ request.user.profile.timezone }})</small></td></tr>
+                            <tr><th>Duration:</th><td>{{ session.duration }} minutes</td></tr>
+                            <tr><th>Type:</th><td>{{ session.get_type_display }}</td></tr>
+                            <tr><th>Price:</th><td>{{ session.service.price }} {{ session.service.currency }}</td></tr>
+                            <tr><th>Payment:</th><td>{% with payment=session.payments.first %}{% if payment and payment.paid_at %}<span class="badge bg-success">Paid</span>{% else %}<span class="badge bg-warning text-dark">Not Paid</span>{% if request.user.profile == session.client and not session.is_past and session.status in 'PENDING,CHANGED,CONFIRMED' %}<button id="paypal-btn" class="btn btn-sm btn-primary ms-2" style="vertical-align: middle; padding: 0.25rem 0.75rem; font-size: 0.9rem;"><i class="fab fa-paypal me-1"></i>Pay</button>{% endif %}{% endif %}{% endwith %}</td></tr>
+                            {% if session.meeting_url %}
+                            <tr><th>Online Meeting Link:</th><td><a href="{{ session.meeting_url }}" target="_blank">{{ session.meeting_url }}</a></td></tr>
+                            {% endif %}
+                            {% if session.meeting_address %}
+                            <tr><th>Meeting Address:</th><td>{{ session.meeting_address }}</td></tr>
+                            {% endif %}
+                            <tr>
+                                <th>{% if user.profile.is_coach %}Client{% else %}Coach{% endif %}:</th>
+                                <td>
+                                    {% if user.profile.is_coach %}
+                                        <a href="{% url 'accounts:client_detail' session.client.pk %}">{{ session.client.user.get_full_name }}</a>
                                     {% else %}
-                                        -
+                                        {{ session.coach.user.get_full_name }}
                                     {% endif %}
-                                {% endwith %}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Status:</th>
-                            <td>
-                                <span class="badge px-4 py-2 fs-6 bg-{% if session.status == 'CONFIRMED' %}success{% elif session.status == 'CANCELLED' %}danger{% else %}warning{% endif %}">
-                                    {{ session.status|title }}
-                                </span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>{% if user.profile.is_coach %}Client{% else %}Coach{% endif %}:</th>
-                            <td>
-                                {% if user.profile.is_coach %}
-                                    <a href="{% url 'accounts:client_detail' session.client.pk %}">{{ session.client.user.get_full_name }}</a>
-                                {% else %}
-                                    {{ session.coach.user.get_full_name }}
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% if session.notes %}
-                        <tr><th>Notes:</th><td>{{ session.notes }}</td></tr>
-                        {% endif %}
-                    </table>
-                    <div class="d-flex flex-wrap justify-content-center gap-3 mt-4 w-100">
-                        <a href="{% url 'viewer:session_history' %}" class="btn btn-secondary btn-lg px-4 fw-bold">Back to Sessions</a>
-                        {% if session.can_cancel %}
-                            <form method="post" action="{% url 'viewer:cancel_session' session.id %}" class="inline-form m-0 p-0">
+                                </td>
+                            </tr>
+                            {% if session.notes %}
+                            <tr><th>Notes:</th><td>{{ session.notes }}</td></tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                    <div class="d-grid gap-2 mt-4">
+                        <a href="{% url 'viewer:session_history' %}" class="btn btn-outline-secondary fw-bold">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Sessions
+                        </a>
+                        {% if not session.is_past and (session.can_cancel or request.user.profile == session.coach or request.user.is_superuser) %}
+                            <form method="post" action="{% url 'viewer:cancel_session' session.pk %}" class="d-grid mt-2">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-danger btn-lg px-4 fw-bold">Cancel Session</button>
+                                <button type="submit" class="btn btn-danger fw-bold" onclick="return confirm('Are you sure you want to cancel this session?');">
+                                    <i class="fas fa-times me-2"></i>Cancel Session
+                                </button>
                             </form>
                         {% endif %}
-                        {% if request.user.profile == session.client and session.can_cancel or request.user.profile == session.coach or request.user.is_superuser %}
-                            <a href="{% url 'viewer:session_edit' session.pk %}" class="btn btn-warning btn-lg px-4 fw-bold">Edit</a>
+                        {% if request.user.profile == session.client and not session.is_past and session.status == 'CHANGED' and not session.payments.first.paid_at %}
+                            <button id="paypal-btn" class="btn btn-primary fw-bold">
+                                <i class="fab fa-paypal me-2"></i>Pay with PayPal
+                            </button>
+                        {% endif %}
+                        {% if not session.is_past and (can_edit_or_cancel or request.user.profile == session.coach or request.user.is_superuser) %}
+                            <a href="{% url 'viewer:session_edit' session.pk %}" class="btn btn-warning fw-bold">
+                                <i class="fas fa-edit me-2"></i>Edit Session
+                            </a>
+                        {% endif %}
+                        {% if request.user.profile == session.client and session.is_past and session.status == 'CONFIRMED' and not session.reviews.exists %}
+                            <a href="{% url 'viewer:create-review' session.pk %}" class="btn btn-success fw-bold">
+                                <i class="fas fa-star me-2"></i>Add Review
+                            </a>
+                        {% endif %}
+                        {% if request.user.profile == session.client and session.is_past and session.status == 'CHANGED' and not session.reviews.exists %}
+                            <a href="{% url 'viewer:create-review' session.pk %}" class="btn btn-success fw-bold">
+                                <i class="fas fa-star me-2"></i>Add Review
+                            </a>
+                        {% endif %}
+                        {% if request.user.profile.is_coach and session.status in 'PENDING,CHANGED' %}
+                            <form method="post" class="d-grid mt-2">
+                                {% csrf_token %}
+                                {% if session.type == 'online' %}
+                                    <div class="mb-3">
+                                        <label for="id_meeting_url" class="form-label">Online Meeting Link:</label>
+                                        <input type="url" name="meeting_url" id="id_meeting_url" class="form-control" value="{{ session.meeting_url|default:'' }}" required>
+                                    </div>
+                                {% elif session.type == 'personal' %}
+                                    <div class="mb-3">
+                                        <label for="id_meeting_address" class="form-label">Meeting Address:</label>
+                                        <input type="text" name="meeting_address" id="id_meeting_address" class="form-control" value="{{ session.meeting_address|default:'' }}" required>
+                                    </div>
+                                {% endif %}
+                                <button type="submit" class="btn btn-success fw-bold">
+                                    <i class="fas fa-check me-2"></i>Confirm Session
+                                </button>
+                            </form>
                         {% endif %}
                     </div>
                 </div>
             </div>
+
+            {% if session.reviews.exists %}
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white border-bottom">
+                            <h3 class="h4 mb-0 text-center text-success">Reviews</h3>
+                        </div>
+                        <div class="card-body p-4">
+                            {% for review in session.reviews.all %}
+                            <div class="review-item mb-4 pb-3 border-bottom">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <strong>{{ review.session.client.user.get_full_name }}</strong>
+                                        <span class="text-muted ms-2">{{ review.created_at|date:"F j, Y" }}</span>
+                                    </div>
+                                    <div class="rating">
+                                        {% for i in "12345"|make_list %}
+                                            {% if forloop.counter <= review.rating %}
+                                                <i class="fas fa-star text-warning"></i>
+                                            {% else %}
+                                                <i class="far fa-star text-warning"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% if review.comment %}
+                                <p class="review-text mb-0 text-start w-100" style="max-width:100%;">{{ review.comment }}</p>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>

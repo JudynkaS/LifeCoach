@@ -1,4 +1,4 @@
-from django.contrib.auth import logout
+from django.contrib.auth import logout, login
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, redirect
@@ -25,23 +25,33 @@ class SubmittableLoginView(LoginView):
     template_name = 'registration/login.html'
 
 
-class SignUpView(CreateView):
-    template_name = 'register.html'
-    form_class = SignUpForm
-    success_url = reverse_lazy('viewer:home')
-
 def user_logout(request):
     logout(request)
     return redirect(request.META.get('HTTP_REFERER', '/'))  # zůstat na stejné stránce
 
 
-class ProfileDetailView(LoginRequiredMixin, DetailView):
+class CreateProfileView(LoginRequiredMixin, CreateView):
+    model = Profile
+    form_class = ProfileUpdateForm
+    template_name = 'accounts/profile_create.html'
+    success_url = reverse_lazy('accounts:profile')
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        form.instance.is_client = True
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('accounts:profile', kwargs={'pk': self.object.pk})
+
+
+class ProfileDetailView(DetailView):
     model = Profile
     template_name = 'accounts/profile.html'
     context_object_name = 'profile'
 
     def get_object(self, queryset=None):
-        return self.request.user.profile
+        return Profile.objects.get(pk=self.kwargs['pk'])
 
 
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
@@ -51,6 +61,23 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_object(self, queryset=None):
         return self.request.user.profile
+
+    def form_valid(self, form):
+        import logging
+        logger = logging.getLogger(__name__)
+        try:
+            response = super().form_valid(form)
+            messages.success(self.request, 'Profile updated successfully!')
+            logger.info(f"Profile for user {self.request.user.username} updated successfully.")
+            if self.request.FILES:
+                logger.info(f"Uploaded files: {self.request.FILES}")
+            if self.object.avatar:
+                logger.info(f"Avatar path: {self.object.avatar.path}")
+            return response
+        except Exception as e:
+            messages.error(self.request, f'Error updating profile: {str(e)}')
+            logger.error(f"Error updating profile for user {self.request.user.username}: {str(e)}")
+            return self.form_invalid(form)
 
     def get_success_url(self):
         return reverse('accounts:profile', kwargs={'pk': self.request.user.profile.pk})
@@ -116,3 +143,23 @@ class ClientListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return Profile.objects.filter(is_client=True)
+
+def register(request):
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            try:
+                user = form.save()
+                user.backend = 'django.contrib.auth.backends.ModelBackend'
+                login(request, user)
+                messages.success(request, 'Account created successfully!')
+                return redirect('viewer:home')
+            except Exception as e:
+                messages.error(request, f'Error creating account: {str(e)}')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
+    else:
+        form = SignUpForm()
+    return render(request, 'registration/register.html', {'form': form})

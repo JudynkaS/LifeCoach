@@ -3,10 +3,10 @@
 
 {% block title %}Login - LifeCoach{% endblock %}
 
-{% block content %}
-<div class="container mt-5">
+{% block card_container %}
     <div class="row justify-content-center">
-        <div class="col-md-6">
+        <div class="col-12 col-md-10 col-lg-8 col-xl-10">
+            {% block card_content %}
             <div class="card shadow-sm">
                 <div class="card-header bg-white border-bottom">
                     <h3 class="h4 mb-0 text-center text-success">Login</h3>
@@ -14,6 +14,11 @@
                 <div class="card-body p-4">
                     <form method="post" novalidate>
                         {% csrf_token %}
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
                         {{ form|crispy }}
                         <button type="submit" class="btn btn-success w-100 py-3 mt-3">
                             <i class="fas fa-sign-in-alt me-2"></i>Login
@@ -21,12 +26,12 @@
                     </form>
                     <hr class="my-4">
                     <div class="text-center text-muted">
-                        Nemáte účet?
-                        <a href="{% url 'accounts:register' %}" class="text-success text-decoration-none">Zaregistrujte se zde</a>
+                        Don't have an account?
+                        <a href="{% url 'accounts:register' %}" class="text-success text-decoration-none">Register here</a>
                     </div>
                 </div>
             </div>
+            {% endblock %}
         </div>
     </div>
-</div>
 {% endblock %} 
