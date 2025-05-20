@@ -20,8 +20,6 @@ ENV/
 
 # Django
 local_settings.py
-db.sqlite3
-db.sqlite3-journal
 media/
 static/
 
@@ -46,6 +44,9 @@ config/credentials.json
 /media/
 /static/
 /avatars/
+
+# Django static files
+staticfiles/
 
 # Ostatní
 *.bak
