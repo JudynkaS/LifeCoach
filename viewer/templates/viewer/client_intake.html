@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}Client Intake Form{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated and not user.profile.is_coach %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8 col-xl-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h3 class="h4 mb-0 text-center text-success">Client Intake Form</h3>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-center text-muted mb-4">Please complete this form to help us better understand your needs and goals.</p>
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Medical History -->
+                        <div class="mb-4">
+                            <h4 class="h5 mb-3 text-success">Medical History</h4>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    {{ form.medical_conditions|as_crispy_field }}
+                                </div>
+                                <div class="col-12">
+                                    {{ form.emotional_treatment_history|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Goals and Challenges -->
+                        <div class="mb-4">
+                            <h4 class="h5 mb-3 text-success">Goals and Challenges</h4>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    {{ form.goals|as_crispy_field }}
+                                </div>
+                                <div class="col-12">
+                                    {{ form.fears_phobias|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Session Preferences -->
+                        <div class="mb-4">
+                            <h4 class="h5 mb-3 text-success">Session Preferences</h4>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    {{ form.preferred_session_type|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.preferred_session_time|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Information -->
+                        <div class="mb-4">
+                            <h4 class="h5 mb-3 text-success">Additional Information</h4>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    {{ form.additional_notes|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Consent -->
+                        <div class="mb-4">
+                            <h4 class="h5 mb-3 text-success">Consent and Agreement</h4>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    {{ form.therapy_consent|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success py-3 mt-2 fw-bold">
+                                <i class="fas fa-save me-2"></i>Submit Form
+                            </button>
+                            <a href="{% url 'accounts:profile' user.profile.pk %}" class="btn btn-outline-secondary fw-bold">
+                                Back to Profile
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="container mt-5">
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        This form is only available for clients. Please log in with a client account to access this page.
+    </div>
+</div>
+{% endif %}
+{% endblock %} 

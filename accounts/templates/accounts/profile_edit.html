@@ -1,179 +1,152 @@
 {% extends 'base.html' %}
+{% load crispy_forms_tags %}
 {% load static %}
 
 {% block title %}Edit Profile - LifeCoach{% endblock %}
 
-{% block content %}
-<div class="container">
-    <h1 class="page-title">Edit Profile</h1>
+{% block card_container %}
     <div class="row justify-content-center">
-        <div class="col-12 col-md-10 col-lg-8 col-xl-6">
-            <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
-                {% csrf_token %}
-                <div class="mb-4">
-                    <div class="card h-100 border-0 bg-light shadow-sm mb-4">
-                        <div class="card-body">
-                            <h3 class="h5 mb-4 pb-2 border-bottom">
-                                <i class="fas fa-user me-2 text-primary"></i>Contact Information
-                            </h3>
-                            <div class="mb-4">
-                                <label class="form-label">First Name</label>
-                                {{ form.first_name }}
-                                {% if form.first_name.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.first_name.errors }}
-                                </div>
-                                {% endif %}
-                            </div>
-                            <div class="mb-4">
-                                <label class="form-label">Last Name</label>
-                                {{ form.last_name }}
-                                {% if form.last_name.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.last_name.errors }}
-                                </div>
-                                {% endif %}
-                            </div>
-                            <div class="mb-4">
-                                <label class="form-label">Phone Number</label>
-                                <div class="input-group">
-                                    {{ form.phone_prefix }}
-                                    {{ form.phone }}
-                                </div>
-                                {% if form.phone.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.phone.errors }}
-                                </div>
-                                {% endif %}
-                            </div>
-                            <div class="mb-4">
-                                <label class="form-label">Time Zone</label>
-                                {{ form.timezone }}
-                                {% if form.timezone.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.timezone.errors }}
-                                </div>
-                                {% endif %}
-                            </div>
-                            <div class="mb-4">
-                                <label class="form-label">Preferred Contact Method</label>
-                                {{ form.preferred_contact }}
-                                {% if form.preferred_contact.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.preferred_contact.errors }}
-                                </div>
-                                {% endif %}
-                            </div>
-                            <div class="form-check mb-4">
-                                {{ form.notifications_enabled }}
-                                <label class="form-check-label" for="{{ form.notifications_enabled.id_for_label }}">
-                                    Enable Notifications
-                                </label>
-                            </div>
-                        </div>
+        <div class="col-12 col-md-10 col-lg-8 col-xl-10">
+            {% block card_content %}
+            <div class="card page-card p-4">
+                <div class="text-center mb-4">
+                    <div class="avatar-container mb-3">
+                        {% if user.profile.avatar %}
+                            <img src="{{ user.profile.avatar.url }}" alt="Profile picture" class="avatar rounded-circle" style="width: 120px; height: 120px; object-fit: cover;">
+                        {% else %}
+                            <img src="{% static 'avatars/avatar_male.png' %}" alt="Default avatar" class="avatar rounded-circle" style="width: 120px; height: 120px; object-fit: cover;">
+                        {% endif %}
                     </div>
-                    <div class="card h-100 border-0 bg-light shadow-sm mb-4">
-                        <div class="card-body">
-                            <h3 class="h5 mb-4 pb-2 border-bottom">
-                                <i class="fas fa-briefcase me-2 text-primary"></i>Professional Details
-                            </h3>
-                            <div class="mb-4">
-                                <label class="form-label">Area of Focus</label>
-                                {{ form.specialization }}
-                                {% if form.specialization.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.specialization.errors }}
-                                </div>
-                                {% endif %}
-                            </div>
-                            <div class="mb-4">
-                                <label class="form-label">Goals</label>
-                                <div class="goals-grid">
-                                    {{ form.goals }}
-                                </div>
-                                {% if form.goals.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.goals.errors }}
-                                </div>
-                                {% endif %}
-                            </div>
-                            {% if user.profile.is_coach %}
-                            <div class="mb-4">
-                                <label class="form-label">Google Calendar Integration</label>
-                                <div class="d-flex align-items-center">
-                                    {% if user.profile.google_refresh_token %}
-                                    <span class="text-success me-2">
-                                        <i class="fas fa-check-circle"></i> Connected to Google Calendar
-                                    </span>
-                                    {% else %}
-                                    <a href="{% url 'accounts:google_oauth_start' %}" class="btn btn-outline-primary">
-                                        <i class="fab fa-google me-2"></i>Connect Google Calendar
-                                    </a>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="card border-0 bg-light shadow-sm mb-4 biography-card">
-                        <div class="card-body">
-                            <h3 class="h5 mb-4 pb-2 border-bottom biography-title">
-                                <i class="fas fa-book me-2 text-primary"></i>Biography
-                            </h3>
-                            <div class="mb-4">
-                                <label class="form-label">About You</label>
-                                {{ form.bio }}
-                                {% if form.bio.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.bio.errors }}
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card border-0 bg-light shadow-sm mb-4">
-                        <div class="card-body">
-                            <h3 class="h5 mb-4 pb-2 border-bottom">
-                                <i class="fas fa-image me-2 text-primary"></i>Profile Picture
-                            </h3>
-                            <div class="mb-4">
-                                {{ form.avatar }}
-                                {% if form.avatar.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.avatar.errors }}
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
+                    <h3 class="h4 mb-2">{{ user.get_full_name|default:user.username }}</h3>
+                    <div class="mb-3 text-center">
+                        {% if user.profile.is_coach %}
+                            <span class="badge bg-success" style="font-size:1rem;">COACH</span>
+                        {% else %}
+                            <span class="badge bg-info" style="font-size:1rem;">CLIENT</span>
+                        {% endif %}
                     </div>
                 </div>
-                <div class="d-flex justify-content-center mt-4">
-                    <button type="submit" class="btn btn-success btn-lg px-5">
-                        <i class="fas fa-save me-2"></i>Save Changes
-                    </button>
-                </div>
-            </form>
+
+                <!-- Výpis všech chyb formuláře -->
+                {% if form.non_field_errors %}
+                  <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                  </div>
+                {% endif %}
+                {% for field in form %}
+                  {% for error in field.errors %}
+                    <div class="alert alert-danger">
+                      {{ field.label }}: {{ error }}
+                    </div>
+                  {% endfor %}
+                {% endfor %}
+
+                <form method="post" enctype="multipart/form-data" id="profile-edit-form">
+                    {% csrf_token %}
+
+                    <div class="mb-4">
+                        <h4 class="h5 mb-3 text-success">Personal Information</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.first_name|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.last_name|as_crispy_field }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.date_of_birth|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.sex|as_crispy_field }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h4 class="h5 mb-3 text-success">Address</h4>
+                        <div class="row">
+                            <div class="col-12">
+                                {{ form.street_address|as_crispy_field }}
+                            </div>
+                            <div class="col-md-5">
+                                {{ form.city|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.state|as_crispy_field }}
+                            </div>
+                            <div class="col-md-3">
+                                {{ form.zip_code|as_crispy_field }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h4 class="h5 mb-3 text-success">Contact</h4>
+                        <div class="row">
+                            <div class="col-md-4">
+                                {{ form.phone_prefix|as_crispy_field }}
+                            </div>
+                            <div class="col-md-8">
+                                {{ form.phone|as_crispy_field }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h4 class="h5 mb-3 text-success">Contact Preferences</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.timezone|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.preferred_contact|as_crispy_field }}
+                            </div>
+                        </div>
+                        {{ form.notifications_enabled|as_crispy_field }}
+                    </div>
+
+                    <div class="mb-4">
+                        <h4 class="h5 mb-3 text-success">Profile Picture</h4>
+                        {{ form.avatar|as_crispy_field }}
+                    </div>
+
+                    <div class="mb-4">
+                        <h4 class="h5 mb-3 text-success">Consent</h4>
+                        <!-- therapy_consent pole zde nebude, uživatel souhlasí jen při registraci -->
+                    </div>
+
+                    <div class="mb-4">
+                        <h4 class="h5 mb-3 text-success">Goals & Interests</h4>
+                        {{ form.goals|as_crispy_field }}
+                        {{ form.specialization|as_crispy_field }}
+                    </div>
+
+                    <div class="mb-4">
+                        <h4 class="h5 mb-3 text-success">Other Information</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.marital_status|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.occupation|as_crispy_field }}
+                            </div>
+                        </div>
+                        {{ form.bio|as_crispy_field }}
+                    </div>
+
+                    <div class="d-flex justify-content-center gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                        <a href="{% url 'accounts:profile' user.profile.pk %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+            {% endblock %}
         </div>
     </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Add custom styling to form elements
-    const formControls = document.querySelectorAll('.form-control, .form-select');
-    formControls.forEach(control => {
-        if (!control.classList.contains('form-select')) {
-            control.classList.add('form-control');
-        }
-    });
-
-    // Style checkboxes container
-    const goalsContainer = document.querySelector('.goals-checkbox-group');
-    if (goalsContainer) {
-        goalsContainer.querySelectorAll('div').forEach(div => {
-            div.classList.add('form-check');
-        });
-    }
-});
-</script>
 {% endblock %} 

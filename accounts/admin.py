@@ -39,9 +39,9 @@ class CustomUserAdmin(UserAdmin):
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'phone', 'timezone', 'is_coach', 'is_client', 'preferred_contact')
+    list_display = ('user', 'get_first_name', 'get_last_name', 'phone', 'timezone', 'is_coach', 'is_client', 'preferred_contact')
     list_filter = ('is_coach', 'is_client', 'timezone')
-    search_fields = ('user__username', 'user__email', 'phone', 'bio')
+    search_fields = ('user__username', 'user__email', 'user__first_name', 'user__last_name', 'phone', 'bio')
     raw_id_fields = ('user',)
     readonly_fields = ('user',)
     fieldsets = (
@@ -56,6 +56,16 @@ class ProfileAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+    def get_first_name(self, obj):
+        return obj.user.first_name
+    get_first_name.short_description = 'First Name'
+    get_first_name.admin_order_field = 'user__first_name'
+
+    def get_last_name(self, obj):
+        return obj.user.last_name
+    get_last_name.short_description = 'Last Name'
+    get_last_name.admin_order_field = 'user__last_name'
 
 
 # Re-register UserAdmin

@@ -6,6 +6,9 @@ A web application for coaching and psychological counseling.
   - [x] Registration (`feature/user-registration`)
     - [x] User registration form
     - [x] Basic authentication
+  - [x] Authentication and Authorization
+    - [x] User login and logout
+    - [x] Role-based access control (client vs coach)
   - [x] Profile Management
     - [x] Edit profile information
     - [x] Avatar upload
@@ -200,10 +203,6 @@ python -m venv .venv
 ```bash
 .venv\Scripts\activate
 ```
-- Linux/Mac:
-```bash
-source .venv/bin/activate
-```
 
 4. Install dependencies:
 ```bash
@@ -262,36 +261,7 @@ LifeCoach/
 └── README.md         # Project documentation
 ```
 
-## TODO
-- [ ] Service Management (CRUD operations)
-  - [ ] Service list
-  - [ ] Service detail
-  - [ ] Create service
-  - [ ] Edit service
-  - [ ] Delete service
-- [ ] Session Management (CRUD operations)
-  - [ ] Session list
-  - [ ] Session detail
-  - [ ] Create session
-  - [ ] Edit session
-  - [ ] Cancel session
-- [ ] Payment Management
-- [ ] Review Management
-- [ ] Filtering and Search
-- [ ] User Interface
-  - [ ] Home page
-  - [ ] Navigation
-  - [ ] Responsive design
-- [ ] Testing
-  - [ ] Unit tests
-  - [ ] Integration tests 
-
 ## Development Setup
-
-### Prerequisites
-- Python 3.11.2
-- MySQL Database
-- Git
 
 ## Testing
 
