@@ -1,20 +1,24 @@
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic import TemplateView, CreateView, ListView, DetailView, UpdateView, DeleteView, View
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.utils import timezone
 from django.contrib import messages
-from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadRequest
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.core.serializers.json import DjangoJSONEncoder
 import json
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 import requests
 import os
+import datetime
+import pytz
+from django.db.models import Q
 
 from .models import Session, Service, Profile, Review, Payment
 from .forms import ServiceForm, BookingForm, ReviewForm, SessionForm
 from .utils.google_calendar import create_coach_calendar_event, delete_coach_calendar_event
+from accounts.models import Profile
 
 class HomeView(TemplateView):
     template_name = 'home.html'
@@ -56,6 +60,8 @@ class SessionHistoryView(LoginRequiredMixin, ListView):
                 client=user_profile,
                 date_time__lte=now
             ).order_by('-date_time')
+        # Přidám časové pásmo uživatele
+        context['timezone'] = user_profile.timezone if hasattr(user_profile, 'timezone') else 'UTC'
         return context
 
 
@@ -195,6 +201,11 @@ class BookingCreateView(LoginRequiredMixin, CreateView):
     template_name = 'viewer/booking_form.html'
     success_url = reverse_lazy('viewer:session_history')
 
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.profile.is_client:
+            return HttpResponseForbidden('Only clients can create bookings.')
+        return super().dispatch(request, *args, **kwargs)
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
@@ -204,6 +215,21 @@ class BookingCreateView(LoginRequiredMixin, CreateView):
             kwargs['initial'] = kwargs.get('initial', {})
             kwargs['initial']['service'] = service
         return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Přidáme services_json pro JavaScript
+        services = {}
+        for service in Service.objects.filter(is_active=True):
+            services[str(service.pk)] = {
+                'price': str(service.price),
+                'currency': service.currency,
+                'duration': service.duration,
+                'description': service.description,
+                'session_type': service.session_type
+            }
+        context['services_json'] = json.dumps(services)
+        return context
 
     def form_valid(self, form):
         form.instance.client = self.request.user.profile
@@ -241,49 +267,48 @@ class BookingCreateView(LoginRequiredMixin, CreateView):
             amount=service.price,
             payment_method=form.cleaned_data['payment_method']
         )
-        return HttpResponseRedirect(self.get_success_url())
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        services = Service.objects.filter(is_active=True)
-        context['services'] = services
-        # Přidáme JSON se všemi údaji o službách
-        context['services_json'] = json.dumps({
-            s.pk: {
-                'price': str(s.price),
-                'duration': s.duration,
-                'description': s.description,
-            } for s in services
-        }, cls=DjangoJSONEncoder)
-        context['title'] = 'Book a Session'
-        context['button_text'] = 'Book Session'
-        return context
+        return response
 
 class SessionUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Session
-    form_class = SessionForm
     template_name = 'viewer/booking_form.html'
     success_url = reverse_lazy('viewer:session_history')
+
+    def get_form_class(self):
+        user = self.request.user
+        if user.profile.is_client:
+            return BookingForm
+        return SessionForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
     def test_func(self):
         session = self.get_object()
         user = self.request.user
-        # Kouč nebo admin může potvrdit, klient může editovat pouze před potvrzením
-        if user.profile.is_coach or user.is_superuser:
+        if user.is_superuser:
             return True
-        return user.profile == session.client and session.status != 'CONFIRMED'
+        if user.profile.is_client and session.client.user == user:
+            return True
+        if user.profile.is_coach and session.coach.user == user:
+            return True
+        return False
 
     def form_valid(self, form):
         session = form.instance
-        # Validace meeting_url/adresa
+        if hasattr(form, 'cleaned_data') and 'date_time' in form.cleaned_data:
+            session.date_time = form.cleaned_data['date_time']
         if session.type == 'online' and not session.meeting_url:
             form.add_error('meeting_url', 'Online session must have a meeting link.')
             return self.form_invalid(form)
         if session.type == 'personal' and not session.meeting_address:
             form.add_error('meeting_address', 'Personal session must have an address.')
             return self.form_invalid(form)
-        # Potvrzení session (status na CONFIRMED) pouze koučem a pokud je zaplaceno
-        if self.request.user.profile.is_coach and session.status == 'PENDING':
+        if self.request.user.profile.is_coach and self.request.POST.get('confirm_and_save'):
+            session.status = 'CONFIRMED'
+        elif self.request.user.profile.is_coach and session.status == 'PENDING':
             payment = session.payments.first()
             if payment and payment.paid_at:
                 session.status = 'CONFIRMED'
@@ -294,6 +319,43 @@ class SessionUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         context['services'] = Service.objects.filter(is_active=True)
         context['title'] = 'Edit Session'
         context['button_text'] = 'Update Session'
+        context['is_edit'] = True
+        context['current_time'] = timezone.now()
+        if self.object and self.object.service:
+            context['price'] = self.object.service.price
+            context['duration'] = self.object.service.duration
+            context['description'] = self.object.service.description
+        # Přidám services_json pro JS sloty
+        services = {}
+        for service in Service.objects.filter(is_active=True):
+            services[str(service.pk)] = {
+                'price': str(service.price),
+                'currency': service.currency,
+                'duration': service.duration,
+                'description': service.description,
+                'session_type': service.session_type
+            }
+        context['services_json'] = json.dumps(services)
+        # Přidej initial_date_time pro JS - upraveno na ISO format
+        if self.object and self.object.date_time:
+            context['initial_date_time'] = self.object.date_time.astimezone(timezone.get_current_timezone()).isoformat()
+        else:
+            context['initial_date_time'] = ''
+        # Přidám rozdíl v hodinách do kontextu
+        user = self.request.user
+        user_tz = timezone.get_current_timezone()
+        if hasattr(user, 'profile') and getattr(user.profile, 'timezone', None):
+            try:
+                user_tz = pytz.timezone(user.profile.timezone)
+            except Exception:
+                pass
+        if self.object and self.object.date_time:
+            now = timezone.now().astimezone(user_tz)
+            session_time = self.object.date_time.astimezone(user_tz)
+            diff = (session_time - now).total_seconds() / 3600
+            context['hours_until_session'] = diff
+        else:
+            context['hours_until_session'] = None
         return context
 
 class SessionCancelView(LoginRequiredMixin, UserPassesTestMixin, View):
@@ -447,3 +509,99 @@ class PayPalCancelView(LoginRequiredMixin, View):
         from django.contrib import messages
         messages.warning(request, 'Payment was cancelled.')
         return redirect('viewer:session_detail', pk=session_id)
+
+class MarkAsPaidView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        session = get_object_or_404(Session, pk=self.kwargs['pk'])
+        return self.request.user.profile == session.coach
+
+    def post(self, request, pk):
+        session = get_object_or_404(Session, pk=pk)
+        payment = session.payments.first()
+        if payment and not payment.paid_at:
+            payment.paid_at = timezone.now()
+            payment.save()
+            messages.success(request, 'Session marked as paid successfully.')
+        else:
+            messages.error(request, 'Could not mark session as paid.')
+        return redirect('viewer:session_detail', pk=pk)
+
+class AvailableSlotsView(LoginRequiredMixin, View):
+    def get(self, request):
+        service_id = request.GET.get('service')
+        if not service_id:
+            return JsonResponse({'error': 'Service ID is required'}, status=400)
+
+        try:
+            service = Service.objects.get(pk=service_id)
+            
+            # Get user's timezone
+            user_timezone = timezone.get_current_timezone()
+            if request.user.profile.timezone:
+                try:
+                    user_timezone = pytz.timezone(request.user.profile.timezone)
+                except pytz.exceptions.UnknownTimeZoneError:
+                    pass
+
+            # Get current time in user's timezone
+            now = timezone.now().astimezone(user_timezone)
+            today = now.date()
+            
+            # Get all booked sessions for this coach
+            booked_sessions = Session.objects.filter(
+                Q(coach=service.coach.profile) | Q(client=request.user.profile),
+                status__in=['CONFIRMED', 'PENDING'],
+                date_time__gte=now
+            )
+            
+            # Create a list of all booked times
+            all_booked_times = []
+            for session in booked_sessions:
+                session_start = session.date_time.astimezone(user_timezone)
+                session_end = session_start + timezone.timedelta(minutes=session.duration)
+                all_booked_times.append((session_start, session_end))
+
+            slots = []
+            # Generate available slots for the next 7 days
+            for day in range(7):
+                current_date = today + timezone.timedelta(days=day)
+                
+                # Skip if it's today and already past working hours
+                if day == 0 and now.hour >= 17:
+                    continue
+                    
+                # Generate slots for each hour from 9 AM to 5 PM
+                for hour in range(9, 17):  # 9:00 - 16:00 (last session starts at 16:00)
+                    # Skip past hours for today
+                    if day == 0 and hour <= now.hour:
+                        continue
+                        
+                    slot_time = timezone.make_aware(
+                        datetime.datetime.combine(current_date, datetime.time(hour=hour)),
+                        timezone=user_timezone
+                    )
+                    
+                    # Check if this slot is available
+                    is_available = True
+                    slot_end = slot_time + timezone.timedelta(minutes=service.duration)
+                    
+                    # Check for overlaps with booked sessions
+                    for booked_start, booked_end in all_booked_times:
+                        if (slot_time < booked_end) and (slot_end > booked_start):
+                            is_available = False
+                            break
+                    
+                    if is_available:
+                        # Format the slot time in user's timezone
+                        slot_local = slot_time.astimezone(user_timezone)
+                        slots.append({
+                            'value': slot_local.isoformat(),
+                            'display': slot_local.strftime('%A %d.%m.%Y %H:%M')
+                        })
+            
+            return JsonResponse({'slots': slots})
+            
+        except Service.DoesNotExist:
+            return JsonResponse({'error': 'Service not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)

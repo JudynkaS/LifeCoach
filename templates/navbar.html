@@ -7,21 +7,48 @@
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
+
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
+
+                <!-- Home -->
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'viewer:home' %}">Home</a>
                 </li>
-                <li class="nav-item">
-                    {% if coach_profile %}
-                        {% if not user.is_authenticated %}
-                            <a class="nav-link" href="{% url 'accounts:profile' coach_profile.pk %}">About me</a>
-                        {% elif not user.profile.is_coach %}
-                            <a class="nav-link" href="{% url 'accounts:profile' coach_profile.pk %}">About me</a>
-                        {% endif %}
+
+                <!-- Public Coach Profile (About Me) -->
+                {% if coach_profile %}
+                    {% if not user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:profile' coach_profile.pk %}">About Me</a>
+                        </li>
+                    {% elif user.profile and not user.profile.is_coach %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:profile' coach_profile.pk %}">About Me</a>
+                        </li>
                     {% endif %}
-                </li>
+                {% endif %}
+
+
+
+                <!-- Static About Page (Optional) -->
+                {% if not user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'accounts:about_me' %}">About me</a>
+                    </li>
+                {% elif user.profile %}
+                    {% if not user.profile.is_coach %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accounts:about_me' %}">About me</a>
+                        </li>
+                    {% endif %}
+                {% endif %}
+
+
+
                 {% if user.is_authenticated %}
+
+                    <!-- User Profile -->
                     <li class="nav-item">
                         {% if user.profile and user.profile.pk %}
                             <a class="nav-link" href="{% url 'accounts:profile' user.profile.pk %}">Profile</a>
@@ -29,30 +56,40 @@
                             <a class="nav-link" href="{% url 'accounts:create_profile' %}">Create Profile</a>
                         {% endif %}
                     </li>
+
+                    <!-- Sessions -->
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'viewer:session_history' %}">Session History</a>
                     </li>
+
+                    <!-- Logout -->
                     <li class="nav-item">
                         <form method="post" action="{% url 'accounts:logout' %}" style="display:inline;">
                             {% csrf_token %}
                             <button type="submit" class="nav-link navbar-logout" style="background:none; border:none; padding:0;">Logout</button>
                         </form>
                     </li>
+
+                    <!-- User Avatar and Name -->
                     <li class="nav-item d-flex align-items-center ms-3">
                         {% if user.profile.avatar %}
-                            <img src="{{ user.profile.avatar.url }}" alt="avatar" class="rounded-circle" style="width:32px; height:32px; object-fit:cover; vertical-align:middle;">
+                            <img src="{{ user.profile.avatar.url }}" alt="avatar" class="rounded-circle" style="width:32px; height:32px; object-fit:cover;">
                         {% else %}
-                            <i class="bi bi-person-circle" style="font-size:1.5rem; vertical-align:middle;"></i>
+                            <i class="bi bi-person-circle" style="font-size:1.5rem;"></i>
                         {% endif %}
-                        <span class="disabled text-white" style="margin-left:0;">{{ user.get_full_name|default:user.username }}</span>
+                        <span class="text-white ms-2">{{ user.get_full_name|default:user.username }}</span>
                     </li>
+
                 {% else %}
+
+                    <!-- Login / Register -->
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'accounts:login' %}">Login</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'accounts:register' %}">Register</a>
                     </li>
+
                 {% endif %}
             </ul>
         </div>

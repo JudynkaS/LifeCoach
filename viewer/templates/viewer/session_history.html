@@ -4,58 +4,264 @@
 {% block title %}Session History{% endblock %}
 
 {% block content %}
-<div class="center-box">
-    <div class="card">
-        <div class="card-body">
-            <h1 class="page-title">Session History</h1>
+{% csrf_token %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="card page-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h1 class="text-primary-green page-title mb-0">Session History</h1>
+                        <div class="d-flex flex-column align-items-end">
+                            <span class="text-muted small mb-1" style="margin-top: 2px;">
+                                All times are shown in your timezone: <strong>{{ timezone }}</strong>
+                            </span>
+                            {% if request.user.profile.is_client %}
+                                <a href="{% url 'viewer:booking_create' %}" class="btn btn-success ms-2">
+                                    <i class="fas fa-plus-circle me-2"></i> New Reservation
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
 
-            <p class="text-center text-muted">
-                All times are shown in your timezone: <strong>{{ timezone }}</strong>
-            </p>
+                    <h3 class="mb-3">Upcoming Sessions</h3>
+                    <div class="table-responsive mb-5">
+                        <table class="table table-striped align-middle text-center">
+                            <thead>
+                                <tr>
+                                    <th>Service</th>
+                                    <th>Client</th>
+                                    <th>Date and Time</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Meeting</th>
+                                    <th>Payment Method</th>
+                                    <th>Paid</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if upcoming_sessions %}
+                                    {% for session in upcoming_sessions %}
+                                    <tr>
+                                        <td>{{ session.service.name }}</td>
+                                        <td>{% if session.client.user %}{{ session.client.user.get_full_name|default:session.client.user.username }}{% else %}-{% endif %}</td>
+                                        <td>{{ session.date_time }}</td>
+                                        <td>{{ session.get_type_display }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if session.status == 'CONFIRMED' %}bg-success
+                                                {% elif session.status == 'CANCELLED' %}bg-danger
+                                                {% elif session.status == 'PENDING' %}bg-warning text-dark
+                                                {% else %}bg-secondary
+                                                {% endif %}">
+                                                {{ session.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if session.meeting_url %}
+                                                <a href="{{ session.meeting_url }}" target="_blank">link</a>
+                                            {% else %}
+                                                None
+                                            {% endif %}
+                                        </td>
+                                        <td>{% with payment=session.payments.first %}{% if payment %}{{ payment.payment_method.name|title }}{% else %}-{% endif %}{% endwith %}</td>
+                                        <td>{% if session.is_paid %}✔️{% else %}❌{% endif %}</td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                {% if session.can_edit or user.profile.is_coach %}
+                                                    <a href="{% url 'viewer:session_edit' session.pk %}"
+                                                       class="btn btn-outline-secondary btn-sm rounded-pill"
+                                                       data-bs-toggle="tooltip"
+                                                       title="Edit Reservation">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                {% endif %}
+                                                {% with payment=session.payments.first %}
+                                                    {% if not session.is_paid and request.user.profile == session.client and payment and payment.payment_method.name|lower == 'paypal' %}
+                                                        <button type="button"
+                                                                class="btn btn-outline-primary btn-sm rounded-pill pay-btn"
+                                                                data-session-id="{{ session.id }}"
+                                                                data-bs-toggle="tooltip"
+                                                                title="Pay with PayPal">
+                                                            <i class="fab fa-paypal"></i>
+                                                        </button>
+                                                    {% endif %}
+                                                {% endwith %}
+                                                {% if session.can_cancel and request.user.profile == session.client or session.can_cancel and request.user.profile == session.coach %}
+                                                    <form method="post" action="{% url 'viewer:cancel_session' session.id %}" class="d-inline">
+                                                        {% csrf_token %}
+                                                        <button type="submit"
+                                                                class="btn btn-outline-danger btn-sm rounded-pill"
+                                                                data-bs-toggle="tooltip"
+                                                                title="Cancel">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </form>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="9" class="text-muted">No upcoming sessions found.</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
 
-            <div class="text-end mb-3">
-                <a href="{% url 'viewer:booking_create' %}" class="btn btn-success">
-                    <i class="fas fa-plus-circle me-2"></i> New Reservation
-                </a>
-            </div>
-
-            <div class="table-responsive">
-                <table class="table table-striped align-middle text-center">
-                    <thead>
-                        <tr>
-                            <th>Service</th>
-                            <th>Client</th>
-                            <th>Date and Time</th>
-                            <th>Type</th>
-                            <th>Status</th>
-                            <th>Meeting</th>
-                            <th>Payment</th>
-                            <th>Paid</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% if sessions %}
-                            {% for session in sessions %}
-                            <tr>
-                                <td>{{ session.service.name }}</td>
-                                <td>{{ session.client.get_full_name }}</td>
-                                <td>{{ session.start_time }}</td>
-                                <td>{{ session.get_type_display }}</td>
-                                <td>{{ session.get_status_display }}</td>
-                                <td>{{ session.meeting_url }}</td>
-                                <td>{{ session.payment_status }}</td>
-                                <td>{% if session.is_paid %}✔️{% else %}❌{% endif %}</td>
-                            </tr>
-                            {% endfor %}
-                        {% else %}
-                            <tr>
-                                <td colspan="8" class="text-muted">No sessions found.</td>
-                            </tr>
-                        {% endif %}
-                    </tbody>
-                </table>
+                    <h3 class="mb-3 mt-4">Past Sessions</h3>
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle text-center">
+                            <thead>
+                                <tr>
+                                    <th>Service</th>
+                                    <th>Client</th>
+                                    <th>Date and Time</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Meeting</th>
+                                    <th>Payment Method</th>
+                                    <th>Paid</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if past_sessions %}
+                                    {% for session in past_sessions %}
+                                    <tr>
+                                        <td>{{ session.service.name }}</td>
+                                        <td>{% if session.client.user %}{{ session.client.user.get_full_name|default:session.client.user.username }}{% else %}-{% endif %}</td>
+                                        <td>{{ session.date_time }}</td>
+                                        <td>{{ session.get_type_display }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if session.status == 'CONFIRMED' %}bg-success
+                                                {% elif session.status == 'CANCELLED' %}bg-danger
+                                                {% elif session.status == 'PENDING' %}bg-warning text-dark
+                                                {% else %}bg-secondary
+                                                {% endif %}">
+                                                {{ session.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if session.meeting_url %}
+                                                <a href="{{ session.meeting_url }}" target="_blank">link</a>
+                                            {% else %}
+                                                None
+                                            {% endif %}
+                                        </td>
+                                        <td>{% with payment=session.payments.first %}{% if payment %}{{ payment.payment_method.name|title }}{% else %}-{% endif %}{% endwith %}</td>
+                                        <td>{% if session.is_paid %}✔️{% else %}❌{% endif %}</td>
+                                        <td>
+                                            {% with review=session.reviews.first %}
+                                                {% if session.status == 'CONFIRMED' and not review and request.user.profile == session.client %}
+                                                    <a href="{% url 'viewer:create-review' session.pk %}"
+                                                       class="btn btn-outline-primary btn-sm rounded-pill"
+                                                       data-bs-toggle="tooltip"
+                                                       title="Write a Review">
+                                                        <i class="fas fa-star"></i>
+                                                    </a>
+                                                {% endif %}
+                                                {% if review and user.profile.is_coach %}
+                                                    <button type="button"
+                                                            class="btn btn-outline-info btn-sm rounded-pill view-review-btn"
+                                                            data-bs-toggle="tooltip"
+                                                            title="View Review"
+                                                            data-review-rating="{{ review.rating }}"
+                                                            data-review-comment="{{ review.comment|default:'' }}"
+                                                            data-review-client="{{ session.client.user.get_full_name|default:session.client.user.username }}">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                {% endif %}
+                                            {% endwith %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="9" class="text-muted">No past sessions found.</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    document.querySelectorAll('.pay-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var sessionId = this.getAttribute('data-session-id');
+            fetch('/api/paypal/create-order/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: 'session_id=' + sessionId
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.approval_url) {
+                    window.location.href = data.approval_url;
+                } else {
+                    alert('PayPal error: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(err => alert('PayPal error: ' + err));
+        });
+    });
+
+    // Review modal logic
+    document.querySelectorAll('.view-review-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const rating = this.getAttribute('data-review-rating');
+            const comment = this.getAttribute('data-review-comment');
+            const client = this.getAttribute('data-review-client');
+            let stars = '';
+            for (let i = 0; i < rating; i++) stars += '<i class="fas fa-star text-warning"></i>';
+            for (let i = rating; i < 5; i++) stars += '<i class="far fa-star text-muted"></i>';
+            document.getElementById('reviewModalClient').textContent = client;
+            document.getElementById('reviewModalStars').innerHTML = stars;
+            document.getElementById('reviewModalComment').textContent = comment || '(No comment)';
+            var modal = new bootstrap.Modal(document.getElementById('reviewModal'));
+            modal.show();
+        });
+    });
+});
+</script>
+<!-- Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="reviewModalLabel">Client Review</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2"><strong>Client:</strong> <span id="reviewModalClient"></span></div>
+        <div class="mb-2"><strong>Rating:</strong> <span id="reviewModalStars"></span></div>
+        <div class="mb-2"><strong>Comment:</strong> <span id="reviewModalComment"></span></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %} 

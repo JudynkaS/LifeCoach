@@ -19,4 +19,6 @@ urlpatterns = [
     path('api/paypal/create-order/', views.CreatePayPalOrderView.as_view(), name='paypal_create_order'),
     path('paypal/return/<int:session_id>/', views.PayPalReturnView.as_view(), name='paypal_return'),
     path('paypal/cancel/<int:session_id>/', views.PayPalCancelView.as_view(), name='paypal_cancel'),
+    path('api/available-slots/', views.AvailableSlotsView.as_view(), name='available_slots'),
+    path('sessions/<int:pk>/mark-as-paid/', views.MarkAsPaidView.as_view(), name='mark_as_paid'),
 ]

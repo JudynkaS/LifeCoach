@@ -6,105 +6,152 @@
 {% endblock %}
 
 {% block content %}
-<div class="center-box">
-    <div class="text-center mb-4">
-        <div class="avatar-container mb-3">
-            {% if user.profile.avatar %}
-                <img src="{{ user.profile.avatar.url }}" alt="Profile picture" class="avatar">
-            {% else %}
-                <div class="avatar-placeholder">
-                    {{ user.get_full_name|default:user.username|make_list|first|upper }}
-                </div>
-            {% endif %}
-        </div>
-        <h1>{{ user.get_full_name|default:user.username }}</h1>
-        <p class="text-muted mb-3">
+<div class="card page-card">
+    <div class="card-body">
+        <div class="text-center mb-4">
+            <div class="avatar-container mb-3">
+                {% if user.profile.avatar %}
+                    <img src="{{ user.profile.avatar.url }}" alt="Profile picture" class="avatar">
+                {% else %}
+                    <div class="avatar-placeholder">
+                        {{ user.get_full_name|default:user.username|make_list|first|upper }}
+                    </div>
+                {% endif %}
+            </div>
+            <h1>{{ user.get_full_name|default:user.username }}</h1>
             {% if user.profile.is_coach %}
                 <span class="badge bg-success">Coach</span>
-            {% else %}
-                <span class="badge bg-info">Client</span>
+            {% elif user.profile.is_client %}
+                <span class="badge bg-primary">Client</span>
             {% endif %}
-        </p>
+        </div>
+
         {% if request.user == user %}
-        <a href="{% url 'accounts:profile_edit' %}" class="get-started-btn">
-            <i class="fas fa-edit me-2"></i>Edit Profile
-        </a>
+        <div class="text-center mb-4">
+            <a href="{% url 'accounts:profile_edit' %}" class="get-started-btn">
+                <i class="fas fa-edit me-2"></i>Edit Profile
+            </a>
+        </div>
+        {% endif %}
+
+        {% if user.profile.is_coach %}
+            <!-- === KOUČ PROFIL === -->
+            <div class="info-list text-center mb-4">
+                <div><strong>Email:</strong> {{ user.email }}</div>
+                {% if user.profile.phone %}
+                    <div><strong>Phone:</strong> {{ user.profile.phone }}</div>
+                {% endif %}
+                {% if user.profile.preferred_contact %}
+                    <div><strong>Preferred Contact:</strong> {{ user.profile.get_preferred_contact_display }}</div>
+                {% endif %}
+                {% if user.profile.timezone %}
+                    <div><strong>Timezone:</strong> {{ user.profile.timezone }}</div>
+                {% endif %}
+                {% if user.profile.city or user.profile.state or user.profile.street_address or user.profile.zip_code %}
+                    <div><strong>Address:</strong>
+                        {{ user.profile.street_address }}{% if user.profile.street_address %}, {% endif %}
+                        {{ user.profile.city }}{% if user.profile.city %}, {% endif %}
+                        {{ user.profile.state }}{% if user.profile.state %}, {% endif %}
+                        {{ user.profile.zip_code }}
+                    </div>
+                {% endif %}
+            </div>
+
+            {% if user.profile.specialization %}
+                <h4 class="section-heading">Specialization</h4>
+                <ul class="text-start d-inline-block mt-2">
+                    {% for line in user.profile.specialization.splitlines %}
+                        {% if line|slice:":1" == '*' %}
+                            <li>{{ line|slice:"1:" }}</li>
+                        {% elif line %}
+                            <li>{{ line }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            {% if user.profile.bio %}
+                <h4 class="section-heading">Biography</h4>
+                <p class="text-justify">{{ user.profile.bio }}</p>
+            {% endif %}
+
+            {% if user.profile.goals %}
+                <h4 class="section-heading">Goals</h4>
+                <ul class="list-inline text-center mt-3">
+                    {% for goal in user.profile.get_goals_list %}
+                        <li class="list-inline-item"><span class="badge bg-info">{{ goal }}</span></li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+        {% elif user.profile.is_client %}
+            <!-- === KLIENT PROFIL === -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="mb-3">Personal Information</h4>
+                    <div class="info-list">
+                        <div><strong>First Name:</strong> {{ user.first_name|default:"-" }}</div>
+                        <div><strong>Middle Initial:</strong> {{ user.profile.middle_initial|default:"-" }}</div>
+                        <div><strong>Last Name:</strong> {{ user.last_name|default:"-" }}</div>
+                        <div><strong>Date of Birth:</strong> {{ user.profile.date_of_birth|default:"-" }}</div>
+                        <div><strong>Sex:</strong> {{ user.profile.get_sex_display|default:"-" }}</div>
+                        <div><strong>Marital Status:</strong> {{ user.profile.get_marital_status_display|default:"-" }}</div>
+                        <div><strong>Occupation:</strong> {{ user.profile.occupation|default:"-" }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="mb-3">Contact</h4>
+                    <div class="info-list">
+                        <div><strong>Email:</strong> {{ user.email }}</div>
+                        <div><strong>Phone:</strong> {{ user.profile.phone_prefix|default:"" }} {{ user.profile.phone|default:"-" }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="mb-3">Address</h4>
+                    <div class="info-list">
+                        <div><strong>Street:</strong> {{ user.profile.street_address|default:"-" }}</div>
+                        <div><strong>City:</strong> {{ user.profile.city|default:"-" }}</div>
+                        <div><strong>State:</strong> {{ user.profile.state|default:"-" }}</div>
+                        <div><strong>ZIP Code:</strong> {{ user.profile.zip_code|default:"-" }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="mb-3">Medical History</h4>
+                    <div class="info-list">
+                        <div><strong>Emotional Treatment:</strong> {{ user.profile.emotional_treatment_history|default:"-" }}</div>
+                        <div><strong>Medical Conditions:</strong> {% if user.profile.medical_conditions %}{{ user.profile.medical_conditions|join:", " }}{% else %}-{% endif %}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="mb-3">Goals and Interests</h4>
+                    <div class="info-list">
+                        <div><strong>Goals:</strong> {% if user.profile.goals %}{{ user.profile.goals|join:", " }}{% else %}-{% endif %}</div>
+                        <div><strong>Fears/Phobias:</strong> {{ user.profile.fears_phobias|default:"-" }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="mb-3">Consent</h4>
+                    <div class="info-list">
+                        <div><strong>Therapy Consent:</strong> {% if user.profile.therapy_consent %}Yes{% else %}No{% endif %}</div>
+                    </div>
+                </div>
+            </div>
         {% endif %}
     </div>
-
-    <div class="card-container">
-        <!-- Personal Info -->
-        <div class="card">
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center mb-4 justify-content-center">
-                    <i class="fas fa-user-circle text-primary fs-4 me-3"></i>
-                    <h3 class="h4 mb-0">Personal Information</h3>
-                </div>
-                <div class="info-list">
-                    <div class="info-item">
-                        <span class="info-label">First Name</span>
-                        <span class="info-value">{{ user.first_name|default:"Not specified" }}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Last Name</span>
-                        <span class="info-value">{{ user.last_name|default:"Not specified" }}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Email</span>
-                        <span class="info-value">{{ user.email }}</span>
-                    </div>
-                    {% if user.profile.phone_number %}
-                    <div class="info-item">
-                        <span class="info-label">Phone</span>
-                        <span class="info-value">{{ user.profile.phone_prefix }} {{ user.profile.phone_number }}</span>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Professional Info -->
-        <div class="card">
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center mb-4 justify-content-center">
-                    <i class="fas fa-briefcase text-primary fs-4 me-3"></i>
-                    <h3 class="h4 mb-0">Professional Details</h3>
-                </div>
-                {% if user.profile.specialization %}
-                <div class="mb-4">
-                    <h4 class="h6 text-muted mb-3">Area of Focus</h4>
-                    <div class="specialization-badge">
-                        {{ user.profile.get_specialization_display }}
-                    </div>
-                </div>
-                {% endif %}
-                {% if user.profile.goals %}
-                <div>
-                    <h4 class="h6 text-muted mb-3">Goals</h4>
-                    <div class="goals-list">
-                        {% for goal in user.profile.get_goals_list %}
-                        <div class="goal-item">
-                            <i class="fas fa-check-circle text-success"></i>
-                            <span>{{ goal }}</span>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    {% if user.profile.bio %}
-    <div class="card mt-4">
-        <div class="card-body p-4">
-            <div class="d-flex align-items-center mb-4 justify-content-center">
-                <i class="fas fa-book text-primary fs-4 me-3"></i>
-                <h3 class="h4 mb-0">Biography</h3>
-            </div>
-            <p class="bio-text mb-0">{{ user.profile.bio }}</p>
-        </div>
-    </div>
-    {% endif %}
 </div>
 {% endblock %}

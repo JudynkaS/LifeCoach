@@ -4,60 +4,47 @@
 {% block title %}Register - LifeCoach{% endblock %}
 
 {% block content %}
-<div class="center-box">
-    <div class="card" style="max-width: 700px; margin: 0 auto;">
-        <div class="card-body p-4">
-            <h1 class="mb-4">Registration</h1>
-
-            {% if form.errors %}
-                <div class="alert alert-danger">
-                    <h5 class="alert-heading">Please correct the following errors:</h5>
-                    <ul class="mb-0">
-                        {% for field in form %}
-                            {% for error in field.errors %}
-                                <li>{{ field.label }}: {{ error }}</li>
-                            {% endfor %}
-                        {% endfor %}
-                        {% for error in form.non_field_errors %}
-                            <li>{{ error }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
-
-            <form method="post" enctype="multipart/form-data" novalidate>
-                {% csrf_token %}
-
-                <!-- Renderuj všechna pole kromě therapy_consent -->
+<div class="form-card">
+    <h2 class="text-primary-green mb-4">Registration</h2>
+    {% if form.errors %}
+        <div class="alert alert-danger">
+            <h5 class="alert-heading">Please correct the following errors:</h5>
+            <ul class="mb-0">
                 {% for field in form %}
-                    {% if field.name != 'therapy_consent' %}
-                        {{ field|as_crispy_field }}
-                    {% endif %}
+                    {% for error in field.errors %}
+                        <li>{{ field.label }}: {{ error }}</li>
+                    {% endfor %}
                 {% endfor %}
-
-                <!-- Text podmínek -->
-                <div class="mt-3 p-3 border rounded bg-light" style="font-size: 0.9em; max-height: 200px; overflow-y: auto;">
-                    I am willing to be guided through relaxation, visual imagery, creative visualization, hypnosis, and stress reduction processes and techniques
-                    for the purpose of vocational or avocational self-improvement. I understand that the hypnotherapy I am receiving is not a substitute for
-                    normal medical care and I have been advised to discuss this hypnotherapy with any doctor who is taking care of me now or in the future.
-                    Additionally, I should continue any present medical treatment and consult my regular medical doctor for treatment of any new or old illnesses.
-                </div>
-
-                <!-- Checkbox až pod textem -->
-                <div class="mt-3">
-                    {{ form.therapy_consent|as_crispy_field }}
-                </div>
-
-                <!-- Tlačítko -->
-                <button type="submit" class="get-started-btn mt-4">
-                    <i class="fas fa-user-plus me-2"></i>Register
-                </button>
-            </form>
-
-            <div class="text-center mt-3">
-                <a href="{% url 'accounts:login' %}" class="text-link">Already have an account? Sign in here</a>
-            </div>
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
         </div>
+    {% endif %}
+    <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        {% for field in form %}
+            {% if field.name != 'therapy_consent' %}
+                {{ field|as_crispy_field }}
+            {% endif %}
+        {% endfor %}
+        <div class="mt-3 p-3 border rounded bg-light" style="font-size: 0.9em; max-height: 200px; overflow-y: auto;">
+            I am willing to be guided through relaxation, visual imagery, creative visualization, hypnosis, and stress reduction processes and techniques
+            for the purpose of vocational or avocational self-improvement. I understand that the hypnotherapy I am receiving is not a substitute for
+            normal medical care and I have been advised to discuss this hypnotherapy with any doctor who is taking care of me now or in the future.
+            Additionally, I should continue any present medical treatment and consult my regular medical doctor for treatment of any new or old illnesses.
+        </div>
+        <div class="mt-3">
+            {{ form.therapy_consent|as_crispy_field }}
+        </div>
+        <div class="form-actions mt-4 text-center">
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-user-plus me-2"></i>Register
+            </button>
+        </div>
+    </form>
+    <div class="text-center mt-3">
+        <a href="{% url 'accounts:login' %}" class="text-link">Already have an account? Sign in here</a>
     </div>
 </div>
 {% endblock %}
