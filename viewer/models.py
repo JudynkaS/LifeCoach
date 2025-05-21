@@ -103,9 +103,24 @@ class Session(models.Model):
     @property
     def can_cancel(self):
         """Session can be cancelled more than 24 hours in advance"""
-        if self.status != 'CONFIRMED':
+        if not self.date_time:
+            return False
+        if self.status not in ['CONFIRMED', 'PENDING']:
             return False
         return (self.date_time - timezone.now()).total_seconds() > 24 * 60 * 60
+
+    @property
+    def can_edit(self):
+        """Session can be edited more than 24 hours in advance"""
+        if not self.date_time:
+            return False
+        if self.status not in ['CONFIRMED', 'PENDING']:
+            return False
+        return (self.date_time - timezone.now()).total_seconds() > 24 * 60 * 60
+
+    @property
+    def is_paid(self):
+        return self.payments.filter(paid_at__isnull=False).exists()
 
 
 class Payment(models.Model):

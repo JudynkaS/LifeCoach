@@ -27,17 +27,33 @@
                             <td>
                                 {% with payment=session.payments.first %}
                                     {% if payment %}
-                                        {% if payment.paid_at %}
-                                            <span class="badge bg-success">PAID</span>
-                                        {% else %}
-                                            <span class="badge bg-warning text-dark">NOT PAID</span>
-                                            <form id="paypal-form" class="d-inline ms-2">
-                                                {% csrf_token %}
-                                                <button type="button" id="paypal-btn" class="btn btn-primary btn-sm">
-                                                    PayPal
-                                                </button>
-                                            </form>
-                                        {% endif %}
+                                        <div class="d-flex align-items-center gap-2">
+                                            {% if payment.payment_method.name == 'PayPal' %}
+                                                <i class="fab fa-paypal text-primary"></i>
+                                            {% endif %}
+                                            <span>{{ payment.payment_method.name }}</span>
+                                            {% if payment.paid_at %}
+                                                <span class="badge bg-success">✔️ PAID</span>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark">❌ NOT PAID</span>
+                                                {% if request.user.profile == session.client %}
+                                                <form id="paypal-form" class="d-inline ms-2">
+                                                    {% csrf_token %}
+                                                    <button type="button" id="paypal-btn" class="btn btn-primary btn-sm">
+                                                        PayPal
+                                                    </button>
+                                                </form>
+                                                {% endif %}
+                                                {% if request.user.profile == session.coach %}
+                                                <form method="post" action="{% url 'viewer:mark_as_paid' session.id %}" class="d-inline ms-2">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-success btn-sm">
+                                                        Mark as Paid
+                                                    </button>
+                                                </form>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
                                     {% else %}
                                         -
                                     {% endif %}
@@ -68,7 +84,7 @@
                     </table>
                     <div class="d-flex flex-wrap justify-content-center gap-3 mt-4 w-100">
                         <a href="{% url 'viewer:session_history' %}" class="btn btn-secondary btn-lg px-4 fw-bold">Back to Sessions</a>
-                        {% if session.can_cancel %}
+                        {% if request.user.profile == session.client and session.can_cancel %}
                             <form method="post" action="{% url 'viewer:cancel_session' session.id %}" class="inline-form m-0 p-0">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-danger btn-lg px-4 fw-bold">Cancel Session</button>

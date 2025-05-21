@@ -9,7 +9,7 @@ import os
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 
-from accounts.forms import SignUpForm, ProfileUpdateForm
+from accounts.forms import SignUpForm, ProfileUpdateForm, ClientProfileUpdateForm
 from accounts.models import Profile
 
 # Google OAuth2 imports
@@ -44,21 +44,29 @@ class ProfileDetailView(LoginRequiredMixin, DetailView):
         return self.request.user.profile
 
 
-class ProfileUpdateView(LoginRequiredMixin, UpdateView):
-    model = Profile
-    form_class = ProfileUpdateForm
-    template_name = 'accounts/profile_edit.html'
-
-    def get_object(self, queryset=None):
-        return self.request.user.profile
-
-    def get_success_url(self):
-        return reverse('accounts:profile', kwargs={'pk': self.request.user.profile.pk})
-
 @login_required
-def profile_view(request):
-    profile = getattr(request.user, 'profile', None)
-    return render(request, 'accounts/profile.html', {'profile': profile, 'user': request.user})
+def profile_edit(request):
+    profile = request.user.profile
+    if profile.is_coach:
+        form_class = ProfileUpdateForm
+        template = 'accounts/profile_edit_coach.html'
+    else:
+        form_class = ClientProfileUpdateForm
+        template = 'accounts/profile_edit_client.html'
+    if request.method == 'POST':
+        form = form_class(request.POST, request.FILES, instance=profile)
+        print('POST data:', request.POST)
+        print('FILES:', request.FILES)
+        if form.is_valid():
+            print('Form is valid. Cleaned data:', form.cleaned_data)
+            form.save()
+            print('Profile saved successfully.')
+            return redirect('accounts:profile', pk=profile.pk)
+        else:
+            print('Form errors:', form.errors)
+    else:
+        form = form_class(instance=profile)
+    return render(request, template, {'form': form, 'user': request.user})
 
 @login_required
 def google_oauth_start(request):
@@ -116,3 +124,7 @@ class ClientListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return Profile.objects.filter(is_client=True)
+
+def about_me(request):
+    coach = Profile.objects.filter(is_coach=True).first()
+    return render(request, 'accounts/about_me.html', {'coach': coach})

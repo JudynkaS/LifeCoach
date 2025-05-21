@@ -77,20 +77,14 @@ class Profile(Model):
     last_login_ip = models.GenericIPAddressField(null=True, blank=True)
     is_coach = models.BooleanField(default=False)
     is_client = models.BooleanField(default=True)
+    is_admin = models.BooleanField(default=False)
     
     # Fields for specialization and goals
     specialization = models.CharField(
-        max_length=50,
-        choices=SPECIALIZATION_CHOICES,
+        max_length=1000,
         null=True,
         blank=True,
-        verbose_name='Specialization Category'
-    )
-    goals = models.CharField(
-        max_length=255,
-        null=True,
-        blank=True,
-        verbose_name='Goals'
+        verbose_name='Specialization'
     )
 
     # Personal Information
@@ -119,6 +113,7 @@ class Profile(Model):
 
     # Consent
     therapy_consent = models.BooleanField(default=False)
+    hypnotherapy_consent = models.BooleanField(default=False)
 
     # Google refresh token
     google_refresh_token = models.CharField(max_length=255, blank=True, null=True)
@@ -148,21 +143,10 @@ class Profile(Model):
         self.goals = ','.join(goals_list) if goals_list else ''
 
     def generate_bio(self):
-        """Generates bio based on specialization and goals."""
+        """Generates bio based on specialization."""
         parts = []
-        
         if self.specialization:
-            spec_dict = dict(SPECIALIZATION_CHOICES)
-            parts.append(f"I specialize in {spec_dict[self.specialization].lower()}.")
-        
-        goals = self.get_goals_list()
-        if goals:
-            goals_dict = dict(GOALS_CHOICES)
-            goal_names = [goals_dict[g].lower() for g in goals if g in goals_dict]
-            if goal_names:
-                goals_text = ", ".join(goal_names[:-1] + [f"and {goal_names[-1]}"] if len(goal_names) > 1 else goal_names)
-                parts.append(f"My goal is to help clients with: {goals_text}.")
-        
+            parts.append(f"I specialize in {self.specialization}.")
         return " ".join(parts) if parts else ""
 
     def get_medical_conditions(self):

@@ -11,7 +11,7 @@ def notify_session_created(sender, instance, created, **kwargs):
         subject = 'Nová rezervace'
         message = f'Byla vytvořena nová rezervace na {instance.date_time}'
         from_email = settings.EMAIL_HOST_USER
-        recipient_list = [instance.client.email]
+        recipient_list = [instance.client.user.email]
         
         send_mail(
             subject,
@@ -28,7 +28,7 @@ def notify_session_status_change(sender, instance, **kwargs):
         subject = 'Změna stavu rezervace'
         message = f'Stav vaší rezervace na {instance.date_time} byl změněn na {instance.status}'
         from_email = settings.EMAIL_HOST_USER
-        recipient_list = [instance.client.email]
+        recipient_list = [instance.client.user.email]
         
         send_mail(
             subject,

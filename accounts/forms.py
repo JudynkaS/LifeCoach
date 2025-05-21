@@ -11,7 +11,8 @@ import re
 
 from accounts.models import (
     Profile, PHONE_PREFIXES, SPECIALIZATION_CHOICES, GOALS_CHOICES,
-    MARITAL_STATUS_CHOICES, MEDICAL_CONDITIONS, REFERRAL_SOURCES
+    MARITAL_STATUS_CHOICES, MEDICAL_CONDITIONS, REFERRAL_SOURCES, TIMEZONE_CHOICES,
+    CONTACT_CHOICES
 )
 
 class SignUpForm(UserCreationForm):
@@ -316,11 +317,10 @@ class SignUpForm(UserCreationForm):
     )
 
     # Referral Information
-    referral_source = forms.MultipleChoiceField(
+    referral_source = forms.ChoiceField(
         choices=REFERRAL_SOURCES,
         required=False,
-        label='How did you hear about us?',
-        widget=forms.CheckboxSelectMultiple(attrs={'class': 'referral-checkbox-group'})
+        label='How did you hear about us?'
     )
 
     referral_source_other = forms.CharField(
@@ -387,7 +387,7 @@ class SignUpForm(UserCreationForm):
             fears_phobias=self.cleaned_data.get('fears_phobias'),
             
             # Referral Information
-            referral_source=','.join(self.cleaned_data.get('referral_source', [])),
+            referral_source=self.cleaned_data.get('referral_source'),
             referral_source_other=self.cleaned_data.get('referral_source_other'),
             
             # Consent
@@ -414,18 +414,14 @@ class ProfileUpdateForm(ModelForm):
         label='Country Code'
     )
 
-    specialization = forms.ChoiceField(
-        choices=[('', '-- Select Specialization --')] + list(SPECIALIZATION_CHOICES),
+    specialization = forms.CharField(
         required=False,
         label='Specialization',
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
-
-    goals = forms.MultipleChoiceField(
-        choices=GOALS_CHOICES,
-        required=False,
-        label='Goals',
-        widget=forms.CheckboxSelectMultiple(attrs={'class': 'goals-checkbox-group'})
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 5,
+            'placeholder': '* Self-discovery & personal growth\n* Confidence building\n* Life transitions (career, relationships, identity)'
+        })
     )
 
     # Přidávám pole pro jméno a příjmení
@@ -434,7 +430,7 @@ class ProfileUpdateForm(ModelForm):
 
     class Meta:
         model = Profile
-        fields = ['first_name', 'last_name', 'phone_prefix', 'phone', 'timezone', 'specialization', 'goals', 'bio', 
+        fields = ['first_name', 'last_name', 'phone_prefix', 'phone', 'timezone', 'specialization', 'bio', 
                  'preferred_contact', 'notifications_enabled', 'avatar']
         labels = {
             'phone': 'Phone Number',
@@ -442,13 +438,15 @@ class ProfileUpdateForm(ModelForm):
             'preferred_contact': 'Preferred Contact Method',
             'notifications_enabled': 'Enable Notifications',
             'avatar': 'Profile Picture',
-            'bio': 'Biography'
+            'bio': 'Biography',
+            'specialization': 'Specialization',
         }
         widgets = {
             'bio': Textarea(attrs={'rows': 4, 'class': 'form-control'}),
             'phone': TextInput(attrs={'placeholder': '123456789', 'class': 'form-control'}),
             'timezone': Select(attrs={'class': 'form-select'}),
             'preferred_contact': Select(attrs={'class': 'form-select'}),
+            'specialization': TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Psychotherapy, Mindfulness, ...'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -460,9 +458,6 @@ class ProfileUpdateForm(ModelForm):
                     self.initial['phone_prefix'] = prefix
                     self.initial['phone'] = self.instance.phone[len(prefix):]
                     break
-        # Set initial goals from comma-separated string
-        if self.instance and self.instance.goals:
-            self.initial['goals'] = self.instance.get_goals_list()
         # Nastavím počáteční hodnoty pro jméno a příjmení z user modelu
         if self.instance and self.instance.user:
             self.initial['first_name'] = self.instance.user.first_name
@@ -481,18 +476,9 @@ class ProfileUpdateForm(ModelForm):
         cleaned_data = super().clean()
         phone = cleaned_data.get('phone')
         prefix = cleaned_data.get('phone_prefix')
-        goals = cleaned_data.get('goals', [])
         if phone and prefix:
             # Combine prefix and number
             cleaned_data['phone'] = f"{prefix}{phone}"
-        # Convert goals list to comma-separated string
-        if goals:
-            cleaned_data['goals'] = ','.join(goals)
-        # Generate bio if specialization or goals changed
-        if 'specialization' in self.changed_data or 'goals' in self.changed_data:
-            self.instance.specialization = cleaned_data.get('specialization')
-            self.instance.goals = cleaned_data.get('goals')
-            cleaned_data['bio'] = self.instance.generate_bio()
         return cleaned_data
 
     def save(self, commit=True):
@@ -505,3 +491,42 @@ class ProfileUpdateForm(ModelForm):
             user.save()
             profile.save()
         return profile
+
+
+class ClientProfileUpdateForm(ModelForm):
+    phone_prefix = forms.ChoiceField(
+        choices=PHONE_PREFIXES,
+        initial='+1',
+        label='Country Code'
+    )
+    first_name = forms.CharField(max_length=30, required=True, label='First Name')
+    last_name = forms.CharField(max_length=30, required=True, label='Last Name')
+    middle_initial = forms.CharField(max_length=1, required=False, label='Middle Initial')
+    street_address = forms.CharField(max_length=255, required=True, label='Street Address')
+    city = forms.CharField(max_length=100, required=True, label='City')
+    state = forms.CharField(max_length=100, required=True, label='State')
+    zip_code = forms.CharField(max_length=10, required=True, label='ZIP Code')
+    date_of_birth = forms.DateField(required=True, label='Birth Date', widget=forms.DateInput(attrs={'type': 'date'}))
+    sex = forms.ChoiceField(choices=[('M', 'Male'), ('F', 'Female')], required=True, label='Sex')
+    marital_status = forms.ChoiceField(choices=MARITAL_STATUS_CHOICES, required=False, label='Marital Status')
+    occupation = forms.CharField(max_length=100, required=False, label='Occupation')
+    phone = forms.CharField(label='Mobile Phone', required=False)
+    timezone = forms.ChoiceField(choices=TIMEZONE_CHOICES, required=True, label='Time Zone')
+    emotional_treatment_history = forms.CharField(required=False, label='Emotional Treatment', widget=forms.Textarea(attrs={'rows': 2}))
+    medical_conditions = forms.MultipleChoiceField(choices=MEDICAL_CONDITIONS, required=False, label='Medical Conditions', widget=forms.CheckboxSelectMultiple)
+    fears_phobias = forms.CharField(required=False, label='Fears/Phobias', widget=forms.Textarea(attrs={'rows': 2}))
+    referral_source = forms.ChoiceField(choices=REFERRAL_SOURCES, required=False, label='Referral Source')
+    referral_source_other = forms.CharField(required=False, label='Other Referral Source')
+    preferred_contact = forms.ChoiceField(choices=CONTACT_CHOICES, required=False, label='Preferred Contact Method')
+    notifications_enabled = forms.BooleanField(required=False, label='Enable Notifications')
+    avatar = forms.ImageField(required=False, label='Profile Picture')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.user:
+            self.initial['first_name'] = self.instance.user.first_name
+            self.initial['last_name'] = self.instance.user.last_name
+
+    class Meta:
+        model = Profile
+        exclude = ['specialization', 'therapy_consent', 'bio', 'is_coach', 'is_client', 'user', 'last_login_ip', 'google_refresh_token']

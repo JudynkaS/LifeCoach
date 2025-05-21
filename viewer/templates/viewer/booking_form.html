@@ -1,116 +1,313 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 {% load static %}
+{% load tz %}
 
-{% block title %}Book a Session{% endblock %}
+{% block title %}{% if is_edit %}Edit Session{% else %}Book a Session{% endif %}{% endblock %}
 
 {% block content %}
-<div class="center-box">
-    <h2 class="text-center mb-4">{% if is_edit %}Edit Session{% else %}Book a Session{% endif %}</h2>
-    {% if user.profile.is_coach %}
-        <div class="alert alert-info text-center mb-0">
-            <i class="fas fa-info-circle me-2"></i>
-            As a coach, you cannot book sessions. You can only receive bookings from clients.
+<div class="page-container">
+    <div class="form-card">
+        <h2 class="text-primary-green mb-4">{% if is_edit %}Edit Reservation{% else %}Book a Session{% endif %}</h2>
+        
+        <!-- Debug výpis -->
+        {% if debug %}
+        <div class="alert alert-info">
+            <pre>{{ services_json|pprint }}</pre>
         </div>
-    {% endif %}
-    <form method="post" enctype="multipart/form-data" id="booking-form">
-        {% csrf_token %}
-        <div class="mb-3">
-            <label for="id_service" class="form-label">Service*</label>
-            <select id="id_service" name="service" class="form-control">
-                <option value="">---------</option>
-                {% for service in services %}
-                    <option value="{{ service.pk }}"
-                            data-price="{{ service.price }}"
-                            data-duration="{{ service.duration }}"
-                            data-description="{{ service.description }}"
-                            {% if form.initial.service|stringformat:"s" == service.pk|stringformat:"s" %}selected{% endif %}>
-                        {{ service.name }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-        <h5 class="card-title">Service Details</h5>
-        <div class="mb-3">
-            <label for="id_price" class="form-label">Price</label>
-            <input type="text" id="id_price" class="form-control" readonly value="{{ form.initial.price }}">
-        </div>
-        <div class="mb-3">
-            <label for="id_duration" class="form-label">Duration (minutes)</label>
-            <input type="text" id="id_duration" class="form-control" readonly value="{{ form.initial.duration }}">
-        </div>
-        <div class="mb-3">
-            <label for="id_description" class="form-label">Description</label>
-            <textarea id="id_description" class="form-control" rows="3" readonly>{{ form.initial.description }}</textarea>
-        </div>
-        {{ form.date_time|as_crispy_field }}
-        {{ form.type|as_crispy_field }}
-        {{ form.notes|as_crispy_field }}
-        <div id="online-fields" style="display: none;">
-            {{ form.meeting_url|as_crispy_field }}
-        </div>
-        <div id="personal-fields" style="display: none;">
-            {{ form.meeting_address|as_crispy_field }}
-        </div>
-        {{ form.payment_method|as_crispy_field }}
-        <div class="form-actions">
-            <button type="submit" class="get-started-btn">{% if is_edit %}Save Changes{% else %}Book Session{% endif %}</button>
-            <a href="{% url 'viewer:session_history' %}" class="get-started-btn" style="background: #7a868a;">Cancel</a>
-        </div>
-    </form>
+        {% endif %}
+
+        {% if is_edit %}
+            <p class="text-muted mt-2 mb-4">
+                {% if user.profile.is_coach %}
+                You can only change the date/time and meeting details.
+                Other details are from the original booking.
+                {% else %}
+                {% if hours_until_session is not None and hours_until_session < 24 %}
+                <div class="alert alert-warning">
+                    This session is less than 24 hours away. Changes are not allowed. Please contact your coach if you need to reschedule.
+                </div>
+                {% else %}
+                You can change the date/time and notes for this session.
+                Service and session type cannot be changed - please cancel and create a new booking if you need to change these.
+                {% endif %}
+                {% endif %}
+            </p>
+        {% endif %}
+        
+        <p class="text-muted mb-4">
+            All times are shown in your timezone:
+            <strong>{{ user.profile.timezone }}</strong>
+        </p>
+
+        <form method="post" enctype="multipart/form-data" id="booking-form">
+            {% csrf_token %}
+            <input type="hidden" id="initial_date_time" value="{{ initial_date_time }}">
+            
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            {% if is_edit %}
+                <div class="form-group mb-3">
+                    <label class="form-label">Service</label>
+                    <input type="text" class="form-control" readonly value="{{ form.instance.service.name }}">
+                    <input type="hidden" id="id_service" value="{{ form.instance.service.id }}">
+                </div>
+                
+                <div class="form-group row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Price</label>
+                        <input type="text" class="form-control" readonly value="{{ form.instance.service.price }} {{ form.instance.service.currency }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Duration</label>
+                        <input type="text" class="form-control" readonly value="{{ form.instance.service.duration }} minutes">
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" rows="4" readonly>{{ form.instance.service.description }}</textarea>
+                </div>
+
+                {% if user.profile.is_coach %}
+                <div class="form-group mb-3">
+                    {{ form.type|as_crispy_field }}
+                </div>
+                {% else %}
+                <div class="form-group mb-3">
+                    <label class="form-label">Session Type</label>
+                    <input type="text" class="form-control" readonly value="{{ form.instance.get_type_display }}">
+                    <input type="hidden" name="type" value="{{ form.instance.type }}">
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="form-group mb-3">
+                    {{ form.service|as_crispy_field }}
+                </div>
+                
+                <div class="form-group row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Price</label>
+                        <input type="text" id="id_price" class="form-control" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Duration</label>
+                        <input type="text" id="id_duration" class="form-control" readonly>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea id="id_description" class="form-control" rows="4" readonly></textarea>
+                </div>
+
+                {% if user.profile.is_coach %}
+                <div class="form-group mb-3">
+                    {{ form.type|as_crispy_field }}
+                </div>
+                {% else %}
+                <div class="form-group mb-3">
+                    <label class="form-label">Session Type</label>
+                    <input type="text" id="session_type_display" class="form-control" readonly>
+                    <input type="hidden" id="session_type_hidden" name="type">
+                </div>
+                {% endif %}
+            {% endif %}
+
+            <div class="form-group mb-3">
+                <label for="id_date_time" class="form-label">Date time*</label>
+                <select name="date_time" id="id_date_time" class="form-control" {% if not form.service.value %}disabled{% endif %}>
+                    <option value="">{% if form.service.value %}Loading available slots...{% else %}Please select a service first{% endif %}</option>
+                </select>
+                {% if form.date_time.errors %}
+                    <div class="invalid-feedback d-block">{{ form.date_time.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            {% if user.profile.is_coach %}
+                <div class="form-group mb-3" id="div_id_meeting_url">
+                    {{ form.meeting_url|as_crispy_field }}
+                </div>
+                <div class="form-group mb-3" id="div_id_meeting_address">
+                    {{ form.meeting_address|as_crispy_field }}
+                </div>
+            {% endif %}
+
+            {% if not user.profile.is_coach %}
+                <div class="form-group mb-3">
+                    {{ form.notes|as_crispy_field }}
+                </div>
+
+                <div class="form-group mb-3">
+                    {{ form.payment_method|as_crispy_field }}
+                </div>
+            {% endif %}
+
+            <div class="form-actions d-flex justify-content-center gap-3 mt-4">
+                <button type="submit" class="btn btn-success">
+                    {% if is_edit %}Save Changes{% else %}Book Session{% endif %}
+                </button>
+                {% if user.profile.is_coach and form.instance.status == 'PENDING' %}
+                    <button type="submit" name="confirm_and_save" value="1" class="btn btn-success">
+                        Confirm & Save
+                    </button>
+                {% endif %}
+                {% if form.instance.pk and form.instance.can_cancel %}
+                    <form method="post" action="{% url 'viewer:cancel_session' form.instance.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-secondary">
+                            Cancel Session
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+{{ block.super }}
 <script>
-const servicesData = {{ services_json|safe }};
-const serviceSelect = document.getElementById('id_service');
-const priceInput = document.getElementById('id_price');
-const durationInput = document.getElementById('id_duration');
-const descriptionInput = document.getElementById('id_description');
-const typeSelect = document.getElementById('id_type');
-const onlineFields = document.getElementById('online-fields');
-const personalFields = document.getElementById('personal-fields');
+document.addEventListener('DOMContentLoaded', function() {
+    const initialInput = document.getElementById('initial_date_time');
+    const serviceSelect = document.getElementById('id_service');
+    const priceInput = document.getElementById('id_price');
+    const durationInput = document.getElementById('id_duration');
+    const descriptionInput = document.getElementById('id_description');
+    const typeSelect = document.getElementById('id_type');
+    const dateTimeInput = document.getElementById('id_date_time');
+    const meetingUrlField = document.getElementById('div_id_meeting_url');
+    const meetingAddressField = document.getElementById('div_id_meeting_address');
+    const sessionTypeDisplay = document.getElementById('session_type_display');
+    const sessionTypeHidden = document.getElementById('session_type_hidden');
 
-function updateServiceInfo() {
-    const selectedId = serviceSelect.value;
-    if (selectedId && servicesData[selectedId]) {
-        priceInput.value = servicesData[selectedId].price;
-        durationInput.value = servicesData[selectedId].duration;
-        descriptionInput.value = servicesData[selectedId].description;
-    } else {
-        priceInput.value = '';
-        durationInput.value = '';
-        descriptionInput.value = '';
-    }
-}
-
-function updateMeetingFields() {
-    const type = typeSelect.value;
-    if (type === 'online') {
-        onlineFields.style.display = 'block';
-        personalFields.style.display = 'none';
-    } else if (type === 'personal') {
-        onlineFields.style.display = 'none';
-        personalFields.style.display = 'block';
-    } else {
-        onlineFields.style.display = 'none';
-        personalFields.style.display = 'none';
-    }
-}
-
-if (serviceSelect) {
-    serviceSelect.addEventListener('change', function() {
-        const url = new URL(window.location.href);
-        url.searchParams.set('service', this.value);
-        window.location.href = url.toString();
+    console.log('Form elements:', {
+        serviceSelect: serviceSelect?.value,
+        dateTimeInput: dateTimeInput?.value,
+        initialInput: initialInput?.value
     });
-    updateServiceInfo();
-}
 
-if (typeSelect) {
-    typeSelect.addEventListener('change', updateMeetingFields);
-    updateMeetingFields();
-}
+    function updateMeetingFields(type) {
+        if (type === 'online') {
+            if (meetingUrlField) { meetingUrlField.style.display = 'block'; }
+            if (meetingAddressField) { meetingAddressField.style.display = 'none'; }
+        } else if (type === 'personal') {
+            if (meetingUrlField) { meetingUrlField.style.display = 'none'; }
+            if (meetingAddressField) { meetingAddressField.style.display = 'block'; }
+        } else {
+            if (meetingUrlField) { meetingUrlField.style.display = 'none'; }
+            if (meetingAddressField) { meetingAddressField.style.display = 'none'; }
+        }
+    }
+
+    function loadSlots(serviceId) {
+        if (!dateTimeInput) return;
+        dateTimeInput.disabled = true;
+        dateTimeInput.innerHTML = '<option value="">Loading available slots...</option>';
+        fetch(`/api/available-slots/?service=${serviceId}`)
+            .then(response => response.json())
+            .then(data => {
+                let selectedDateTime = dateTimeInput.value;
+                if (!selectedDateTime && initialInput) {
+                    selectedDateTime = initialInput.value;
+                }
+                let found = false;
+                dateTimeInput.innerHTML = '<option value="">Select a time slot</option>';
+                data.slots.forEach(slot => {
+                    const option = document.createElement('option');
+                    // Převod ISO na 'YYYY-MM-DD HH:mm'
+                    const dt = new Date(slot.value);
+                    const pad = n => n < 10 ? '0' + n : n;
+                    const formatted = dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate()) + ' ' + pad(dt.getHours()) + ':' + pad(dt.getMinutes());
+                    option.value = formatted;
+                    option.textContent = slot.display;
+                    if (selectedDateTime && formatted === selectedDateTime) {
+                        option.selected = true;
+                        found = true;
+                    }
+                    dateTimeInput.appendChild(option);
+                });
+                if (selectedDateTime && !found) {
+                    const option = document.createElement('option');
+                    option.value = selectedDateTime;
+                    option.textContent = 'Current: ' + selectedDateTime;
+                    option.selected = true;
+                    dateTimeInput.insertBefore(option, dateTimeInput.firstChild.nextSibling);
+                }
+                dateTimeInput.disabled = false;
+            })
+            .catch(error => {
+                dateTimeInput.innerHTML = '<option value="">Chyba při načítání slotů - zkuste to prosím znovu</option>';
+                dateTimeInput.disabled = true;
+            });
+    }
+
+    if (serviceSelect && serviceSelect.value) {
+        loadSlots(serviceSelect.value);
+    }
+
+    if (serviceSelect) {
+        const servicesData = JSON.parse('{{ services_json|escapejs }}');
+        console.log('Services data loaded:', Object.keys(servicesData).length, 'services');
+
+        if (dateTimeInput && !serviceSelect.value) {
+            dateTimeInput.disabled = true;
+        }
+
+        serviceSelect.addEventListener('change', function() {
+            console.log('Service changed to:', this.value);
+            const selectedService = servicesData[this.value];
+            
+            if (selectedService) {
+                console.log('Selected service data:', selectedService);
+                if (priceInput) priceInput.value = selectedService.price + ' ' + selectedService.currency;
+                if (durationInput) durationInput.value = selectedService.duration + ' minutes';
+                if (descriptionInput) descriptionInput.value = selectedService.description;
+                
+                if (typeSelect) {
+                    typeSelect.value = selectedService.session_type || 'online';
+                    updateMeetingFields(typeSelect.value);
+                }
+                
+                if (sessionTypeDisplay && sessionTypeHidden) {
+                    sessionTypeDisplay.value = selectedService.session_type.charAt(0).toUpperCase() + selectedService.session_type.slice(1);
+                    sessionTypeHidden.value = selectedService.session_type;
+                }
+                
+                loadSlots(this.value);
+            } else {
+                console.log('No service selected');
+                if (priceInput) priceInput.value = '';
+                if (durationInput) durationInput.value = '';
+                if (descriptionInput) descriptionInput.value = '';
+                
+                if (typeSelect) {
+                    typeSelect.value = '';
+                }
+                
+                if (sessionTypeDisplay && sessionTypeHidden) {
+                    sessionTypeDisplay.value = '';
+                    sessionTypeHidden.value = '';
+                }
+                
+                if (dateTimeInput) {
+                    dateTimeInput.disabled = true;
+                    dateTimeInput.innerHTML = '<option value="">Nejdřív vyberte službu</option>';
+                }
+
+                updateMeetingFields('');
+            }
+        });
+    }
+
+    if (typeSelect) {
+        typeSelect.addEventListener('change', function() {
+            updateMeetingFields(this.value);
+        });
+    }
+});
 </script>
 {% endblock %}
