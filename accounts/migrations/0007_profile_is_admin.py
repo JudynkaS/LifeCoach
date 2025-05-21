@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0006_profile_hypnotherapy_consent'),
+        ("accounts", "0006_profile_hypnotherapy_consent"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='profile',
-            name='is_admin',
+            model_name="profile",
+            name="is_admin",
             field=models.BooleanField(default=False),
         ),
     ]

@@ -5,7 +5,7 @@
 
 {% block content %}
 {% csrf_token %}
-<div class="container py-4">
+<div class="container">
     <div class="row justify-content-center">
         <div class="col-12">
             <div class="card page-card">
@@ -69,7 +69,7 @@
                                         <td>{% if session.is_paid %}✔️{% else %}❌{% endif %}</td>
                                         <td>
                                             <div class="btn-group" role="group">
-                                                {% if session.can_edit or user.profile.is_coach %}
+                                                {% if session.status != 'CANCELLED' and session.can_edit or session.status != 'CANCELLED' and user.profile.is_coach %}
                                                     <a href="{% url 'viewer:session_edit' session.pk %}"
                                                        class="btn btn-outline-secondary btn-sm rounded-pill"
                                                        data-bs-toggle="tooltip"
@@ -88,7 +88,7 @@
                                                         </button>
                                                     {% endif %}
                                                 {% endwith %}
-                                                {% if session.can_cancel and request.user.profile == session.client or session.can_cancel and request.user.profile == session.coach %}
+                                                {% if session.can_cancel and request.user.profile == session.client or session.can_cancel and request.user.profile.is_coach %}
                                                     <form method="post" action="{% url 'viewer:cancel_session' session.id %}" class="d-inline">
                                                         {% csrf_token %}
                                                         <button type="submit"

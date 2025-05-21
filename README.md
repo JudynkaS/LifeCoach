@@ -22,6 +22,7 @@ A web application for coaching and psychological counseling.
     - [x] Time slot selection
     - [x] Service selection
   - [x] View available slots 
+  - [x] utils/ Google Calendar integration 
   - [x] Confirmation - coach
   - [x] Cancel or reschedule sessions 
     - [x] More than 24 hours in advance – allowed
@@ -42,6 +43,15 @@ A web application for coaching and psychological counseling.
 - [x] 6 Reporting (`feature/reporting-analytics`)
   - [x] Booking reports
   - [x] Payment overviews
+  - [x] Excel export
+  - [x] Review list
+
+- [x] 7 Test (`feature/test`)
+  - [x] viewer/test_models.py (model tests: Service, Session, Review)
+  - [x] viewer/test_forms.py (form tests: SessionForm, ServiceForm, ReviewForm)
+  - [x] viewer/test_views.py (view tests: test_home_view, test_service_list_view, integrační scénáře)
+  - [x] viewer/tests.py (integration and functional tests)
+
 
 ## Database Structure
 
@@ -79,10 +89,13 @@ A web application for coaching and psychological counseling.
   - [x] date_time (datetime)
   - [x] duration (integer)
   - [x] type (enum: 'online', 'personal')
-  - [x] status (enum: 'CANCELLED', 'CONFIRMED', 'CHANGED')
+  - [x] status (enum: 'CANCELLED', 'CONFIRMED', 'CHANGED', 'PENDING')
   - [x] notes (text)
   - [x] created (datetime)
   - [x] updated (datetime)
+  - [x] google_calendar_event_id (varchar[255], nullable)
+  - [x] meeting_url (URL, nullable)
+  - [x] meeting_address (varchar[255], nullable)
 
 - [x] Service
   - [x] id (Integer, PK)
@@ -92,16 +105,26 @@ A web application for coaching and psychological counseling.
   - [x] duration (integer)
   - [x] is_active (bool)
   - [x] currency (varchar[3])
+  - [x] session_type (enum: 'online', 'personal')
+  - [x] coach_id (FK)
+  - [x] category_id (FK, nullable)
+
+- [x] PaymentMethod
+  - [x] id (Integer, PK)
+  - [x] name (varchar[50])
+  - [x] description (text, nullable)
+  - [x] created (datetime)
+  - [x] updated (datetime)
 
 - [x] Payment
   - [x] id (Integer, PK)
   - [x] session_id (FK)
   - [x] amount (decimal)
-  - [x] payment_method (enum: 'cash', 'paypal', 'Venmo')
-  - [x] status (varchar[20])
-  - [x] transaction_id (varchar[100])
-  - [x] currency (varchar[3])
-  - [x] created_at (datetime)
+  - [x] payment_method_id (FK)
+  - [x] paid_at (datetime, nullable)
+  - [x] transaction_id (varchar[100], nullable)
+  - [x] created (datetime)
+  - [x] updated (datetime)
 
 - [x] Review
   - [x] id (Integer, PK)

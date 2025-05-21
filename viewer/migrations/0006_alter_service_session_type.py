@@ -6,13 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('viewer', '0005_alter_service_session_type_alter_session_duration_and_more'),
+        ("viewer", "0005_alter_service_session_type_alter_session_duration_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='service',
-            name='session_type',
-            field=models.CharField(choices=[('online', 'Online'), ('personal', 'Personal')], default='online', max_length=20),
+            model_name="service",
+            name="session_type",
+            field=models.CharField(
+                choices=[("online", "Online"), ("personal", "Personal")],
+                default="online",
+                max_length=20,
+            ),
         ),
     ]

@@ -11,7 +11,7 @@
                         <th>Client</th>
                         <th>Rating</th>
                         <th>Comment</th>
-                        <th>Date</th>
+                        <th style="min-width: 140px; white-space: nowrap;">Date</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -20,7 +20,7 @@
                             <td>{{ review.session.client.user.get_full_name|default:review.session.client.user.username }}</td>
                             <td>{{ review.rating }}</td>
                             <td>{{ review.comment|default:'-' }}</td>
-                            <td>{{ review.created|date:'Y-m-d H:i' }}</td>
+                            <td style="min-width: 140px; white-space: nowrap;">{{ review.created|date:'Y-m-d H:i' }}</td>
                         </tr>
                     {% empty %}
                         <tr><td colspan="4" class="text-muted">No reviews found.</td></tr>

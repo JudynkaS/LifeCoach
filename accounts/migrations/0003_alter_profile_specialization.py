@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0002_profile_google_refresh_token'),
+        ("accounts", "0002_profile_google_refresh_token"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='profile',
-            name='specialization',
+            model_name="profile",
+            name="specialization",
             field=models.TextField(blank=True, null=True),
         ),
     ]
