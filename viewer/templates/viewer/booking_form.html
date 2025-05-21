@@ -118,7 +118,8 @@
 
             <div class="form-group mb-3">
                 <label for="id_date_time" class="form-label">Date time*</label>
-                <select name="date_time" id="id_date_time" class="form-control" {% if not form.service.value %}disabled{% endif %}>
+                {# Pokud je editace, select není disabled #}
+                <select name="date_time" id="id_date_time" class="form-control" {% if not form.service.value and not is_edit %}disabled{% endif %}>
                     <option value="">{% if form.service.value %}Loading available slots...{% else %}Please select a service first{% endif %}</option>
                 </select>
                 {% if form.date_time.errors %}
@@ -155,15 +156,15 @@
                     </button>
                 {% endif %}
                 {% if form.instance.pk and form.instance.can_cancel %}
-                    <form method="post" action="{% url 'viewer:cancel_session' form.instance.pk %}" class="d-inline">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-secondary">
-                            Cancel Session
-                        </button>
-                    </form>
+                    <!-- Cancel Session button removed -->
                 {% endif %}
             </div>
         </form>
+        <div class="d-flex justify-content-center mt-4">
+            <a href="{% url 'viewer:session_history' %}" class="btn btn-secondary btn-lg px-4 fw-bold">
+                Back to Sessions
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -171,8 +172,19 @@
 {% block extra_js %}
 {{ block.super }}
 <script>
+function isoToBookingFormat(isoString) {
+    if (!isoString) return '';
+    const dt = new Date(isoString);
+    const pad = n => n < 10 ? '0' + n : n;
+    return dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate()) + ' ' + pad(dt.getHours()) + ':' + pad(dt.getMinutes());
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const initialInput = document.getElementById('initial_date_time');
+    // Převod initial_date_time z ISO na správný formát
+    if (initialInput && initialInput.value && initialInput.value.includes('T')) {
+        initialInput.value = isoToBookingFormat(initialInput.value);
+    }
     const serviceSelect = document.getElementById('id_service');
     const priceInput = document.getElementById('id_price');
     const durationInput = document.getElementById('id_duration');

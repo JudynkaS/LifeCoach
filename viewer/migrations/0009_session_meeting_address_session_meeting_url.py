@@ -6,18 +6,27 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('viewer', '0008_payment_transaction_id_alter_session_status'),
+        ("viewer", "0008_payment_transaction_id_alter_session_status"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='session',
-            name='meeting_address',
-            field=models.CharField(blank=True, help_text='Address for personal session', max_length=255, null=True),
+            model_name="session",
+            name="meeting_address",
+            field=models.CharField(
+                blank=True,
+                help_text="Address for personal session",
+                max_length=255,
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='session',
-            name='meeting_url',
-            field=models.URLField(blank=True, help_text='Link for online session (Zoom, Meet, etc.)', null=True),
+            model_name="session",
+            name="meeting_url",
+            field=models.URLField(
+                blank=True,
+                help_text="Link for online session (Zoom, Meet, etc.)",
+                null=True,
+            ),
         ),
     ]

@@ -2,7 +2,7 @@
 {% load dict_extras %}
 {% block title %}Coach Reporting & Analytics{% endblock %}
 {% block content %}
-<div class="container py-4">
+<div class="container">
     <div class="card page-card">
         <form method="get" action="{% url 'viewer:coach_report_export' %}">
             <button type="submit" class="btn btn-primary mb-3">
@@ -101,6 +101,41 @@
                         </tr>
                     {% empty %}
                         <tr><td colspan="3" class="text-muted">No data</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 class="section-title mt-5">Cancelled & Paid Sessions</h2>
+            <div class="section-block mb-4">
+                <p class="text-muted">List of clients who paid for a session but had to cancel. You can refund them or keep the credit for a future session.</p>
+                <table class="table table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>Client</th>
+                            <th>Service</th>
+                            <th>Date</th>
+                            <th>Amount Paid</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for session in cancelled_paid_sessions %}
+                        <tr>
+                            <td>{{ session.client.user.get_full_name|default:session.client.user.username }}</td>
+                            <td>{{ session.service.name }}</td>
+                            <td>{{ session.date_time|date:'Y-m-d H:i' }}</td>
+                            <td>
+                                {% with payment=session.payments.first %}
+                                    {% if payment and payment.paid_at %}
+                                        {{ payment.amount }} {{ payment.payment_method.currency|default:'USD' }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="text-muted">No cancelled & paid sessions found.</td></tr>
                     {% endfor %}
                     </tbody>
                 </table>

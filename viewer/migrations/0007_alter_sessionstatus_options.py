@@ -6,12 +6,15 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('viewer', '0006_alter_service_session_type'),
+        ("viewer", "0006_alter_service_session_type"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='sessionstatus',
-            options={'verbose_name': 'Session status', 'verbose_name_plural': 'Session statuses'},
+            name="sessionstatus",
+            options={
+                "verbose_name": "Session status",
+                "verbose_name_plural": "Session statuses",
+            },
         ),
     ]

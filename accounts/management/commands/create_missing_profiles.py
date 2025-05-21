@@ -4,7 +4,7 @@ from accounts.models import Profile
 
 
 class Command(BaseCommand):
-    help = 'Creates missing user profiles'
+    help = "Creates missing user profiles"
 
     def handle(self, *args, **options):
         users_without_profile = User.objects.filter(profile__isnull=True)
@@ -16,6 +16,6 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f'Successfully created {created_count} missing profile(s)'
+                f"Successfully created {created_count} missing profile(s)"
             )
-        ) 
+        )

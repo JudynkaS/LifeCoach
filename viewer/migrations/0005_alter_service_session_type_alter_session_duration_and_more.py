@@ -7,28 +7,45 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('viewer', '0004_service_session_update'),
+        ("viewer", "0004_service_session_update"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='service',
-            name='session_type',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, related_name='services', to='viewer.sessiontype'),
+            model_name="service",
+            name="session_type",
+            field=models.ForeignKey(
+                default=1,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="services",
+                to="viewer.sessiontype",
+            ),
         ),
         migrations.AlterField(
-            model_name='session',
-            name='duration',
-            field=models.IntegerField(help_text='Duration in minutes'),
+            model_name="session",
+            name="duration",
+            field=models.IntegerField(help_text="Duration in minutes"),
         ),
         migrations.AlterField(
-            model_name='session',
-            name='status',
-            field=models.CharField(choices=[('CANCELLED', 'Cancelled'), ('CONFIRMED', 'Confirmed'), ('CHANGED', 'Changed')], default='CONFIRMED', max_length=20),
+            model_name="session",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("CANCELLED", "Cancelled"),
+                    ("CONFIRMED", "Confirmed"),
+                    ("CHANGED", "Changed"),
+                ],
+                default="CONFIRMED",
+                max_length=20,
+            ),
         ),
         migrations.AlterField(
-            model_name='session',
-            name='type',
-            field=models.CharField(choices=[('online', 'Online'), ('personal', 'Personal')], default='online', max_length=10),
+            model_name="session",
+            name="type",
+            field=models.CharField(
+                choices=[("online", "Online"), ("personal", "Personal")],
+                default="online",
+                max_length=10,
+            ),
         ),
     ]

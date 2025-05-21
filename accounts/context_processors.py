@@ -1,5 +1,6 @@
 from .models import Profile
 
+
 def user_profile(request):
     profile = None
     if request.user.is_authenticated:
@@ -7,4 +8,4 @@ def user_profile(request):
             profile = request.user.profile
         except Profile.DoesNotExist:
             profile = None
-    return {'profile': profile} 
+    return {"profile": profile}

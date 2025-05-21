@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0004_remove_profile_goals_alter_profile_specialization'),
+        ("accounts", "0004_remove_profile_goals_alter_profile_specialization"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='profile',
-            name='specialization',
-            field=models.CharField(blank=True, max_length=1000, null=True, verbose_name='Specialization'),
+            model_name="profile",
+            name="specialization",
+            field=models.CharField(
+                blank=True, max_length=1000, null=True, verbose_name="Specialization"
+            ),
         ),
     ]
