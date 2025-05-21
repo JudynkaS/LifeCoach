@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load dict_extras %}
+{% block title %}Coach Reporting & Analytics{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="card page-card">
+        <form method="get" action="{% url 'viewer:coach_report_export' %}">
+            <button type="submit" class="btn btn-primary mb-3">
+                <i class="fas fa-file-excel me-1"></i> Export to Excel
+            </button>
+        </form>
+        <div class="card-body">
+            <h1 class="text-primary-green page-title mb-4">Reporting & Analytics</h1>
+
+            <h2 class="section-title">Booking Report</h2>
+            <div class="section-block mb-4">
+                <h4 class="text-success">Most Used Services</h4>
+                <table class="table table-striped align-middle">
+                    <thead><tr><th>Service</th><th>Reservations</th></tr></thead>
+                    <tbody>
+                    {% for row in service_counts %}
+                        <tr><td>{{ row.service__name }}</td><td>{{ row.count }}</td></tr>
+                    {% empty %}
+                        <tr><td colspan="2" class="text-muted">No data</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section-block mb-4">
+                <h4 class="text-success">Reservations by Category</h4>
+                <table class="table table-striped align-middle">
+                    <thead><tr><th>Category</th><th>Reservations</th></tr></thead>
+                    <tbody>
+                    {% for row in category_counts %}
+                        <tr><td>{{ row.service__category__name|default:'-' }}</td><td>{{ row.count }}</td></tr>
+                    {% empty %}
+                        <tr><td colspan="2" class="text-muted">No data</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section-block mb-4">
+                <h4 class="text-success">Reservations by Status</h4>
+                <table class="table table-striped align-middle">
+                    <thead><tr><th>Status</th><th>Count</th></tr></thead>
+                    <tbody>
+                    {% for row in status_counts %}
+                        <tr><td>{{ row.status }}</td><td>{{ row.count }}</td></tr>
+                    {% empty %}
+                        <tr><td colspan="2" class="text-muted">No data</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section-block mb-4">
+                <h4 class="text-success">Most Active Clients</h4>
+                <table class="table table-striped align-middle">
+                    <thead><tr><th>Client</th><th>Reservations</th></tr></thead>
+                    <tbody>
+                    {% for row in client_counts %}
+                        <tr><td>{{ row.client__user__username }}</td><td>{{ row.count }}</td></tr>
+                    {% empty %}
+                        <tr><td colspan="2" class="text-muted">No data</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section-block mb-4">
+                <h4 class="text-success">Service Ratings</h4>
+                <table class="table table-striped align-middle">
+                    <thead><tr><th>Service</th><th>Average Rating</th><th>Reviews</th></tr></thead>
+                    <tbody>
+                    {% for row in service_ratings %}
+                        <tr><td>{{ row.session__service__name }}</td><td>{{ row.avg_rating|floatformat:2 }}</td><td><a href="{% url 'viewer:service_review_list' service_id=service_id_map|dict_get:row.session__service__name %}" class="btn btn-link p-0" data-bs-toggle="tooltip" title="Show all reviews">{{ row.count }}</a></td></tr>
+                    {% empty %}
+                        <tr><td colspan="3" class="text-muted">No data</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 class="section-title">Payment Overview</h2>
+            <div class="section-block mb-4">
+                <p><strong>Total paid:</strong> <span class="text-success">{{ total_paid }}</span></p>
+                <p><strong>Total unpaid:</strong> <span class="text-danger">{{ total_unpaid }}</span></p>
+            </div>
+            <div class="section-block mb-4">
+                <h4 class="text-success">Payments by Method</h4>
+                <table class="table table-striped align-middle">
+                    <thead><tr><th>Method</th><th>Count</th><th>Total</th></tr></thead>
+                    <tbody>
+                    {% for row in payment_methods %}
+                        <tr>
+                            <td>{{ row.payment_method__name }}</td>
+                            <td>{{ row.count }}</td>
+                            <td>{{ row.total }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="3" class="text-muted">No data</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

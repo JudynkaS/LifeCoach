@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Reviews for {{ service.name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="card page-card">
+        <div class="card-body">
+            <h2 class="text-primary-green mb-4">Reviews for {{ service.name }}</h2>
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>Rating</th>
+                        <th>Comment</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for review in reviews %}
+                        <tr>
+                            <td>{{ review.session.client.user.get_full_name|default:review.session.client.user.username }}</td>
+                            <td>{{ review.rating }}</td>
+                            <td>{{ review.comment|default:'-' }}</td>
+                            <td>{{ review.created|date:'Y-m-d H:i' }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="text-muted">No reviews found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <a href="{% url 'viewer:coach_report' %}" class="btn btn-secondary mt-3">Back to Report</a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

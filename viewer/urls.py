@@ -21,4 +21,7 @@ urlpatterns = [
     path('paypal/cancel/<int:session_id>/', views.PayPalCancelView.as_view(), name='paypal_cancel'),
     path('api/available-slots/', views.AvailableSlotsView.as_view(), name='available_slots'),
     path('sessions/<int:pk>/mark-as-paid/', views.MarkAsPaidView.as_view(), name='mark_as_paid'),
+    path('reports/coach/', views.CoachReportView.as_view(), name='coach_report'),
+    path('reports/coach/export/', views.CoachReportExportView.as_view(), name='coach_report_export'),
+    path('reports/service/<int:service_id>/reviews/', views.ServiceReviewListView.as_view(), name='service_review_list'),
 ]
