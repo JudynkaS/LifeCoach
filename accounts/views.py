@@ -26,7 +26,7 @@ class SubmittableLoginView(LoginView):
 
 
 class SignUpView(CreateView):
-    template_name = 'register.html'
+    template_name = 'registration/register.html'
     form_class = SignUpForm
     success_url = reverse_lazy('viewer:home')
 

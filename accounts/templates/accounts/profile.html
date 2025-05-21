@@ -6,119 +6,105 @@
 {% endblock %}
 
 {% block content %}
-<div class="profile-header py-5">
-    <div class="container">
-        <div class="text-center mb-4">
-            <div class="avatar-container mb-3">
-                {% if user.profile.avatar %}
-                    <img src="{{ user.profile.avatar.url }}" alt="Profile picture" class="avatar">
-                {% else %}
-                    <div class="avatar-placeholder">
-                        {{ user.get_full_name|default:user.username|make_list|first|upper }}
-                    </div>
-                {% endif %}
-            </div>
-            <h1>{{ user.get_full_name|default:user.username }}</h1>
-            <p class="text-muted mb-3">
-                {% if user.profile.is_coach %}
-                    <span class="badge bg-success">Coach</span>
-                {% else %}
-                    <span class="badge bg-info">Client</span>
-                {% endif %}
-            </p>
-            {% if request.user == user %}
-            <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary">
-                <i class="fas fa-edit me-2"></i>Edit Profile
-            </a>
+<div class="center-box">
+    <div class="text-center mb-4">
+        <div class="avatar-container mb-3">
+            {% if user.profile.avatar %}
+                <img src="{{ user.profile.avatar.url }}" alt="Profile picture" class="avatar">
+            {% else %}
+                <div class="avatar-placeholder">
+                    {{ user.get_full_name|default:user.username|make_list|first|upper }}
+                </div>
             {% endif %}
         </div>
-    </div>
-</div>
-
-<div class="profile-content pb-5">
-    <div class="container">
-        <div class="row g-4">
-            <!-- Personal Information -->
-            <div class="col-md-6">
-                <div class="card h-100 border-0 shadow-sm rounded-4">
-                    <div class="card-body p-4">
-                        <div class="d-flex align-items-center mb-4">
-                            <i class="fas fa-user-circle text-primary fs-4 me-3"></i>
-                            <h3 class="h4 mb-0">Personal Information</h3>
-                        </div>
-                        <div class="info-list">
-                            <div class="info-item">
-                                <span class="info-label">First Name</span>
-                                <span class="info-value">{{ user.first_name|default:"Not specified" }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Last Name</span>
-                                <span class="info-value">{{ user.last_name|default:"Not specified" }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Email</span>
-                                <span class="info-value">{{ user.email }}</span>
-                            </div>
-                            {% if user.profile.phone_number %}
-                            <div class="info-item">
-                                <span class="info-label">Phone</span>
-                                <span class="info-value">{{ user.profile.phone_prefix }} {{ user.profile.phone_number }}</span>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Professional Details -->
-            <div class="col-md-6">
-                <div class="card h-100 border-0 shadow-sm rounded-4">
-                    <div class="card-body p-4">
-                        <div class="d-flex align-items-center mb-4">
-                            <i class="fas fa-briefcase text-primary fs-4 me-3"></i>
-                            <h3 class="h4 mb-0">Professional Details</h3>
-                        </div>
-                        {% if user.profile.specialization %}
-                        <div class="mb-4">
-                            <h4 class="h6 text-muted mb-3">Area of Focus</h4>
-                            <div class="specialization-badge">
-                                {{ user.profile.get_specialization_display }}
-                            </div>
-                        </div>
-                        {% endif %}
-                        
-                        {% if user.profile.goals %}
-                        <div>
-                            <h4 class="h6 text-muted mb-3">Goals</h4>
-                            <div class="goals-list">
-                                {% for goal in user.profile.get_goals_list %}
-                                <div class="goal-item">
-                                    <i class="fas fa-check-circle text-success"></i>
-                                    <span>{{ goal }}</span>
-                                </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
-            {% if user.profile.bio %}
-            <!-- Biography -->
-            <div class="col-12">
-                <div class="card border-0 shadow-sm rounded-4">
-                    <div class="card-body p-4">
-                        <div class="d-flex align-items-center mb-4">
-                            <i class="fas fa-book text-primary fs-4 me-3"></i>
-                            <h3 class="h4 mb-0">Biography</h3>
-                        </div>
-                        <p class="bio-text mb-0">{{ user.profile.bio }}</p>
-                    </div>
-                </div>
-            </div>
+        <h1>{{ user.get_full_name|default:user.username }}</h1>
+        <p class="text-muted mb-3">
+            {% if user.profile.is_coach %}
+                <span class="badge bg-success">Coach</span>
+            {% else %}
+                <span class="badge bg-info">Client</span>
             {% endif %}
+        </p>
+        {% if request.user == user %}
+        <a href="{% url 'accounts:profile_edit' %}" class="get-started-btn">
+            <i class="fas fa-edit me-2"></i>Edit Profile
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="card-container">
+        <!-- Personal Info -->
+        <div class="card">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-4 justify-content-center">
+                    <i class="fas fa-user-circle text-primary fs-4 me-3"></i>
+                    <h3 class="h4 mb-0">Personal Information</h3>
+                </div>
+                <div class="info-list">
+                    <div class="info-item">
+                        <span class="info-label">First Name</span>
+                        <span class="info-value">{{ user.first_name|default:"Not specified" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Last Name</span>
+                        <span class="info-value">{{ user.last_name|default:"Not specified" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Email</span>
+                        <span class="info-value">{{ user.email }}</span>
+                    </div>
+                    {% if user.profile.phone_number %}
+                    <div class="info-item">
+                        <span class="info-label">Phone</span>
+                        <span class="info-value">{{ user.profile.phone_prefix }} {{ user.profile.phone_number }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Professional Info -->
+        <div class="card">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-4 justify-content-center">
+                    <i class="fas fa-briefcase text-primary fs-4 me-3"></i>
+                    <h3 class="h4 mb-0">Professional Details</h3>
+                </div>
+                {% if user.profile.specialization %}
+                <div class="mb-4">
+                    <h4 class="h6 text-muted mb-3">Area of Focus</h4>
+                    <div class="specialization-badge">
+                        {{ user.profile.get_specialization_display }}
+                    </div>
+                </div>
+                {% endif %}
+                {% if user.profile.goals %}
+                <div>
+                    <h4 class="h6 text-muted mb-3">Goals</h4>
+                    <div class="goals-list">
+                        {% for goal in user.profile.get_goals_list %}
+                        <div class="goal-item">
+                            <i class="fas fa-check-circle text-success"></i>
+                            <span>{{ goal }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
         </div>
     </div>
+
+    {% if user.profile.bio %}
+    <div class="card mt-4">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center mb-4 justify-content-center">
+                <i class="fas fa-book text-primary fs-4 me-3"></i>
+                <h3 class="h4 mb-0">Biography</h3>
+            </div>
+            <p class="bio-text mb-0">{{ user.profile.bio }}</p>
+        </div>
+    </div>
+    {% endif %}
 </div>
-{% endblock %} 
+{% endblock %}

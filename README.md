@@ -32,17 +32,16 @@ A web application for coaching and psychological counseling.
   - [x] Service catalog view
   - [x] Price list
 
-- [ ] 4 Payment integration (`feature/payment-integration`)
+- [x] 4 Payment integration (`feature/payment-integration`)
   - [x] PayPal 
 
-- [ ] 5 Session Feedback (`feature/session-feedback`)
-  - [ ] Rating system after completed session
-  - [ ] Optional written review/comments
+- [x] 5 Session Feedback (`feature/session-feedback`)
+  - [x] Rating system after completed session
+  - [x] Optional written review/comments
 
 - [ ] 6 Reporting (`feature/reporting-analytics`)
   - [ ] Booking reports
   - [ ] Payment overviews
-  - [ ] Client engagement analytics
 
 ## Database Structure
 
@@ -168,19 +167,12 @@ A web application for coaching and psychological counseling.
 - `feature/database-structure` - Database models and migrations
 - `feature/project-description` - Project documentation and setup
 
-### Branch Naming Convention
-- Feature branches: `feature/user-authentication`, `feature/booking-system`
-- Bugfix branches: `bugfix/login-error`, `bugfix/payment-validation`
-- Release branches: `release/v1.0.0`, `release/v1.1.0`
-- Hotfix branches: `hotfix/security-patch`, `hotfix/critical-error`
 
 ## Technologies
 
 - Python 3.x
 - Django 5.2
 - MySQL
-- Bootstrap 5
-- Crispy Forms
 
 ## Installation
 
@@ -199,10 +191,6 @@ python -m venv .venv
 - Windows:
 ```bash
 .venv\Scripts\activate
-```
-- Linux/Mac:
-```bash
-source .venv/bin/activate
 ```
 
 4. Install dependencies:
@@ -261,30 +249,6 @@ LifeCoach/
 ├── .gitignore        # Git ignore rules
 └── README.md         # Project documentation
 ```
-
-## TODO
-- [ ] Service Management (CRUD operations)
-  - [ ] Service list
-  - [ ] Service detail
-  - [ ] Create service
-  - [ ] Edit service
-  - [ ] Delete service
-- [ ] Session Management (CRUD operations)
-  - [ ] Session list
-  - [ ] Session detail
-  - [ ] Create session
-  - [ ] Edit session
-  - [ ] Cancel session
-- [ ] Payment Management
-- [ ] Review Management
-- [ ] Filtering and Search
-- [ ] User Interface
-  - [ ] Home page
-  - [ ] Navigation
-  - [ ] Responsive design
-- [ ] Testing
-  - [ ] Unit tests
-  - [ ] Integration tests 
 
 ## Development Setup
 

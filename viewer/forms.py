@@ -46,11 +46,15 @@ class BookingForm(BaseStyledForm):
     price = forms.DecimalField(label='Price', widget=forms.TextInput(attrs={'readonly': 'readonly'}))
     description = forms.CharField(label='Service Description', widget=forms.Textarea(attrs={'readonly': 'readonly', 'rows': 3}))
     payment_method = forms.ModelChoiceField(queryset=None, label='Payment Method*')
+    type = forms.ChoiceField(choices=[('online', 'Online'), ('personal', 'Personal')], label='Session Type*')
+    notes = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 3}), label='Additional Notes')
+    meeting_url = forms.URLField(required=False, widget=forms.URLInput(attrs={'placeholder': 'https://...'}), label='Meeting URL')
+    meeting_address = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': 'Address for personal session'}), label='Meeting Address')
     debug_service = None  # pro debugování
     
     class Meta:
         model = Session
-        fields = ['service', 'date_time', 'duration', 'type', 'notes']
+        fields = ['service', 'date_time', 'duration', 'type', 'notes', 'meeting_url', 'meeting_address']
         widgets = {
             'notes': forms.Textarea(attrs={'rows': 3}),
             'duration': forms.TextInput(attrs={'readonly': 'readonly'}),

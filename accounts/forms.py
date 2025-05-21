@@ -16,8 +16,7 @@ from accounts.models import (
 
 class SignUpForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
-        fields = ['username', 'first_name', 'last_name', 'email',
-                  'password1', 'password2']
+        fields = ['username', 'first_name', 'last_name', 'email','password1', 'password2']
 
         labels = {
             'username': 'Username *',
@@ -125,11 +124,8 @@ class SignUpForm(UserCreationForm):
             HTML("<hr>"),
 
             # Consent
+            # Consent – text bude v HTML, checkbox se zobrazí až v šabloně ručně
             HTML("<h4 class='mb-3'>Consent</h4>"),
-            Row(
-                Column(Field('therapy_consent'), css_class='col-12'),
-                css_class='mb-4'
-            ),
         )
 
         # Add submit button

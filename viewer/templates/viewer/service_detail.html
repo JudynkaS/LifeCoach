@@ -4,51 +4,47 @@
 {% block title %}{{ service.name }} - Details{% endblock %}
 
 {% block content %}
-<div class="container d-flex justify-content-center align-items-start page-container">
-    <div class="col-12 col-md-10 col-lg-8 col-xl-7 page-content">
-        <div class="card page-card">
-            <h1 class="text-center mb-4 text-primary-green page-title">Service Details</h1>
-            <div class="row">
-                <div class="col-md-6 mb-4 mb-md-0">
-                    <div class="card border-0 shadow-sm rounded-4">
-                        <div class="card-body">
-                            <h4 class="card-title">Service Details</h4>
-                            <p class="card-text">{{ service.description }}</p>
-                            <ul class="list-unstyled">
-                                <li><strong>Duration:</strong> {{ service.duration }} minutes</li>
-                                <li><strong>Price:</strong> {{ service.price }} {{ service.currency }}</li>
-                                <li><strong>Type:</strong> {{ service.session_type }}</li>
-                                <li><strong>Coach:</strong> {{ service.coach.get_full_name }}</li>
-                            </ul>
-                        </div>
-                    </div>
+<div class="center-box">
+    <h1 class="text-center mb-4 text-primary-green page-title">Service Details</h1>
+    <div class="row">
+        <div class="col-md-6 mb-4 mb-md-0">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body">
+                    <h4 class="card-title">Service Details</h4>
+                    <p class="card-text">{{ service.description }}</p>
+                    <ul class="list-unstyled">
+                        <li><strong>Duration:</strong> {{ service.duration }} minutes</li>
+                        <li><strong>Price:</strong> {{ service.price }} {{ service.currency }}</li>
+                        <li><strong>Type:</strong> {{ service.session_type }}</li>
+                        <li><strong>Coach:</strong> {{ service.coach.get_full_name }}</li>
+                    </ul>
                 </div>
-                <div class="col-md-6">
-                    <div class="card border-0 shadow-sm rounded-4">
-                        <div class="card-header bg-white border-0">
-                            <h4 class="card-title mb-0 text-primary-green">Available Time Slots</h4>
-                        </div>
-                        <div class="card-body">
-                            {% if is_coach %}
-                                <p class="text-muted">As a coach, you can view your sessions in the session history.</p>
-                            {% else %}
-                                {% if available_slots %}
-                                    <div class="calendar-grid">
-                                        {% for slot in available_slots %}
-                                            <div class="calendar-slot available">
-                                                <a href="{% url 'viewer:book_session' %}?service={{ service.pk }}&date_time={{ slot|date:'Y-m-d H:i' }}" 
-                                                   class="btn btn-outline-success btn-sm w-100">
-                                                    {{ slot|date:"D, M j, g:i A" }}
-                                                </a>
-                                            </div>
-                                        {% endfor %}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white border-0">
+                    <h4 class="card-title mb-0 text-primary-green">Available Time Slots</h4>
+                </div>
+                <div class="card-body">
+                    {% if is_coach %}
+                        <p class="text-muted">As a coach, you can view your sessions in the session history.</p>
+                    {% else %}
+                        {% if available_slots %}
+                            <div class="calendar-grid">
+                                {% for slot in available_slots %}
+                                    <div class="calendar-slot available">
+                                        <a href="{% url 'viewer:book_session' %}?service={{ service.pk }}&date_time={{ slot|date:'Y-m-d H:i' }}" 
+                                           class="btn btn-outline-success btn-sm w-100">
+                                            {{ slot|date:"D, M j, g:i A" }}
+                                        </a>
                                     </div>
-                                {% else %}
-                                    <p class="text-muted">No available slots for the next 7 days. Please check back later.</p>
-                                {% endif %}
-                            {% endif %}
-                        </div>
-                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">No available slots for the next 7 days. Please check back later.</p>
+                        {% endif %}
+                    {% endif %}
                 </div>
             </div>
         </div>
