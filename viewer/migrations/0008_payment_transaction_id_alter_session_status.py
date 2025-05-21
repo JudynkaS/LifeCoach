@@ -6,18 +6,27 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('viewer', '0007_alter_sessionstatus_options'),
+        ("viewer", "0007_alter_sessionstatus_options"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='payment',
-            name='transaction_id',
+            model_name="payment",
+            name="transaction_id",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
         migrations.AlterField(
-            model_name='session',
-            name='status',
-            field=models.CharField(choices=[('CANCELLED', 'Cancelled'), ('CONFIRMED', 'Confirmed'), ('CHANGED', 'Changed'), ('PENDING', 'Pending')], default='PENDING', max_length=20),
+            model_name="session",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("CANCELLED", "Cancelled"),
+                    ("CONFIRMED", "Confirmed"),
+                    ("CHANGED", "Changed"),
+                    ("PENDING", "Pending"),
+                ],
+                default="PENDING",
+                max_length=20,
+            ),
         ),
     ]

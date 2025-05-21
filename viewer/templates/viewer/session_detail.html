@@ -7,47 +7,85 @@
 {% block content %}
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-12 col-md-10 col-lg-8 col-xl-10">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white border-bottom">
-                    <h3 class="h4 mb-0 text-center text-success">Session Details</h3>
-                </div>
-                <div class="card-body p-4">
-                    <div class="table-responsive">
-                        <table class="table table-borderless mb-4 w-auto mx-auto">
-                            <tr><th>Service:</th><td>{{ session.service.name }}</td></tr>
-                            <tr><th>Date and Time:</th><td>{{ session.date_time|timezone:request.user.profile.timezone|date:"F j, Y, g:i a" }} <br><small class="text-muted">(Time zone: {{ request.user.profile.timezone }})</small></td></tr>
-                            <tr><th>Duration:</th><td>{{ session.duration }} minutes</td></tr>
-                            <tr><th>Type:</th><td>{{ session.get_type_display }}</td></tr>
-                            <tr><th>Price:</th><td>{{ session.service.price }} {{ session.service.currency }}</td></tr>
-                            <tr><th>Payment:</th><td>{% with payment=session.payments.first %}{% if payment and payment.paid_at %}<span class="badge bg-success">Paid</span>{% else %}<span class="badge bg-warning text-dark">Not Paid</span>{% if request.user.profile == session.client and not session.is_past and session.status in 'PENDING,CHANGED,CONFIRMED' %}<button id="paypal-btn" class="btn btn-sm btn-primary ms-2" style="vertical-align: middle; padding: 0.25rem 0.75rem; font-size: 0.9rem;"><i class="fab fa-paypal me-1"></i>Pay</button>{% endif %}{% endif %}{% endwith %}</td></tr>
-                            {% if session.meeting_url %}
-                            <tr><th>Online Meeting Link:</th><td><a href="{{ session.meeting_url }}" target="_blank">{{ session.meeting_url }}</a></td></tr>
-                            {% endif %}
-                            {% if session.meeting_address %}
-                            <tr><th>Meeting Address:</th><td>{{ session.meeting_address }}</td></tr>
-                            {% endif %}
-                            <tr>
-                                <th>{% if user.profile.is_coach %}Client{% else %}Coach{% endif %}:</th>
-                                <td>
-                                    {% if user.profile.is_coach %}
-                                        <a href="{% url 'accounts:client_detail' session.client.pk %}">{{ session.client.user.get_full_name }}</a>
+        <div class="col-12 col-lg-8">
+            <div class="card page-card">
+                <div class="card-body text-center">
+                    <h1 class="mb-4 text-primary-green page-title">Session Details</h1>
+                    <table class="table table-borderless mb-4 w-auto mx-auto">
+                        <tr><th>Service:</th><td>{{ session.service.name }}</td></tr>
+                        <tr><th>Date and Time:</th><td>{{ session.date_time|timezone:request.user.profile.timezone|date:"F j, Y, g:i a" }} <br><small class="text-muted">(Time zone: {{ request.user.profile.timezone }})</small></td></tr>
+                        <tr><th>Duration:</th><td>{{ session.duration }} minutes</td></tr>
+                        <tr><th>Type:</th><td>{{ session.get_type_display }}</td></tr>
+                        {% if session.meeting_url %}
+                        <tr><th>Online Meeting Link:</th><td><a href="{{ session.meeting_url }}" target="_blank">{{ session.meeting_url }}</a></td></tr>
+                        {% endif %}
+                        {% if session.meeting_address %}
+                        <tr><th>Meeting Address:</th><td>{{ session.meeting_address }}</td></tr>
+                        {% endif %}
+                        <tr>
+                            <th>Payment:</th>
+                            <td>
+                                {% with payment=session.payments.first %}
+                                    {% if payment %}
+                                        <div class="d-flex align-items-center gap-2">
+                                            {% if payment.payment_method.name == 'PayPal' %}
+                                                <i class="fab fa-paypal text-primary"></i>
+                                            {% endif %}
+                                            <span>{{ payment.payment_method.name }}</span>
+                                            {% if payment.paid_at %}
+                                                <span class="badge bg-success">✔️ PAID</span>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark">❌ NOT PAID</span>
+                                                {% if request.user.profile == session.client %}
+                                                <form id="paypal-form" class="d-inline ms-2">
+                                                    {% csrf_token %}
+                                                    <button type="button" id="paypal-btn" class="btn btn-primary btn-sm">
+                                                        PayPal
+                                                    </button>
+                                                </form>
+                                                {% endif %}
+                                                {% if request.user.profile == session.coach %}
+                                                <form method="post" action="{% url 'viewer:mark_as_paid' session.id %}" class="d-inline ms-2">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-success btn-sm">
+                                                        Mark as Paid
+                                                    </button>
+                                                </form>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
                                     {% else %}
                                         {{ session.coach.user.get_full_name }}
                                     {% endif %}
-                                </td>
-                            </tr>
-                            {% if session.notes %}
-                            <tr><th>Notes:</th><td>{{ session.notes }}</td></tr>
-                            {% endif %}
-                        </table>
-                    </div>
-                    <div class="d-grid gap-2 mt-4">
-                        <a href="{% url 'viewer:session_history' %}" class="btn btn-outline-secondary fw-bold">
-                            <i class="fas fa-arrow-left me-2"></i>Back to Sessions
-                        </a>
-                        {% if not session.is_past and (session.can_cancel or request.user.profile == session.coach or request.user.is_superuser) %}
-                            <form method="post" action="{% url 'viewer:cancel_session' session.pk %}" class="d-grid mt-2">
+                                {% endwith %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Status:</th>
+                            <td>
+                                <span class="badge px-4 py-2 fs-6 bg-{% if session.status == 'CONFIRMED' %}success{% elif session.status == 'CANCELLED' %}danger{% else %}warning{% endif %}">
+                                    {{ session.status|title }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>{% if user.profile.is_coach %}Client{% else %}Coach{% endif %}:</th>
+                            <td>
+                                {% if user.profile.is_coach %}
+                                    <a href="{% url 'accounts:client_detail' session.client.pk %}">{{ session.client.user.get_full_name }}</a>
+                                {% else %}
+                                    {{ session.coach.user.get_full_name }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if session.notes %}
+                        <tr><th>Notes:</th><td>{{ session.notes }}</td></tr>
+                        {% endif %}
+                    </table>
+                    <div class="d-flex flex-wrap justify-content-center gap-3 mt-4 w-100">
+                        <a href="{% url 'viewer:session_history' %}" class="btn btn-secondary btn-lg px-4 fw-bold">Back to Sessions</a>
+                        {% if request.user.profile == session.client and session.can_cancel %}
+                            <form method="post" action="{% url 'viewer:cancel_session' session.id %}" class="inline-form m-0 p-0">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-danger fw-bold" onclick="return confirm('Are you sure you want to cancel this session?');">
                                     <i class="fas fa-times me-2"></i>Cancel Session

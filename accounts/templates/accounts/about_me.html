@@ -6,98 +6,85 @@
 {% endblock %}
 
 {% block content %}
-{% if not user.is_authenticated %}
-<div class="about-me-wrapper">
-    <div class="profile-header">
-        <div class="container">
+<div class="card page-card">
+    <div class="card-body">
+        <h1 class="page-title">About Me</h1>
+        {% if coach %}
             <div class="text-center mb-4">
-                <div class="avatar-container mb-3">
-                    {% if coach.avatar %}
-                        <img src="{{ coach.avatar.url }}" alt="Profile picture" class="avatar">
-                    {% else %}
-                        <div class="avatar-placeholder">
-                            {{ coach.user.get_full_name|default:coach.user.username|make_list|first|upper }}
-                        </div>
-                    {% endif %}
-                </div>
-                <h1>{{ coach.user.get_full_name|default:coach.user.username }}</h1>
-                <p class="text-muted mb-3">
-                    <span class="badge bg-success">Coach</span>
-                </p>
+                {% if coach.avatar %}
+                    <img src="{{ coach.avatar.url }}" alt="Profile picture" class="avatar mb-3">
+                {% endif %}
+                <h2>{{ coach.user.get_full_name|default:coach.user.username }}</h2>
+                <span class="badge bg-success">Coach</span>
             </div>
-        </div>
-    </div>
 
-    <div class="profile-content custom-cards-wrapper">
-        <div class="container">
-            <div class="row">
-                <!-- Personal Information -->
-                <div class="col-md-6 d-flex">
-                    <div class="card custom-card w-100 h-100">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center mb-4">
-                                <i class="fas fa-user-circle text-primary fs-4 me-3"></i>
-                                <h3 class="h4 mb-0">Personal Information</h3>
-                            </div>
-                            <div class="info-list">
-                                <div class="info-item">
-                                    <span class="info-label">First Name</span>
-                                    <span class="info-value">{{ coach.user.first_name|default:"Not specified" }}</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">Last Name</span>
-                                    <span class="info-value">{{ coach.user.last_name|default:"Not specified" }}</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">Email</span>
-                                    <span class="info-value">{{ coach.user.email }}</span>
-                                </div>
-                                {% if coach.phone %}
-                                <div class="info-item">
-                                    <span class="info-label">Phone</span>
-                                    <span class="info-value">{{ coach.phone }}</span>
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
+            <div class="info-list text-center mb-4">
+                <div><strong>Email:</strong> {{ coach.user.email }}</div>
+                {% if coach.phone %}
+                    <div><strong>Phone:</strong> {{ coach.phone }}</div>
+                {% endif %}
+                {% if coach.preferred_contact %}
+                    <div><strong>Preferred Contact:</strong> {{ coach.get_preferred_contact_display }}</div>
+                {% endif %}
+                {% if coach.timezone %}
+                    <div><strong>Timezone:</strong> {{ coach.timezone }}</div>
+                {% endif %}
+                {% if coach.city or coach.state or coach.street_address or coach.zip_code %}
+                    <div><strong>Address:</strong>
+                        {{ coach.street_address }}{% if coach.street_address %}, {% endif %}
+                        {{ coach.city }}{% if coach.city %}, {% endif %}
+                        {{ coach.state }}{% if coach.state %}, {% endif %}
+                        {{ coach.zip_code }}
                     </div>
-                </div>
-
-                <!-- Professional Details -->
-                <div class="col-md-6 d-flex">
-                    <div class="card custom-card w-100 h-100">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center mb-4">
-                                <i class="fas fa-briefcase text-primary fs-4 me-3"></i>
-                                <h3 class="h4 mb-0">Professional Details</h3>
-                            </div>
-                            <div class="info-list">
-                                <div class="info-item"><span class="info-label">Occupation</span><span class="info-value">{{ coach.occupation|default:"Not specified" }}</span></div>
-                                <div class="info-item"><span class="info-label">Area of Goals</span><span class="info-value">{{ coach.specialization|default:"Not specified"|linebreaksbr }}</span></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Biography -->
-                <div class="col-12">
-                    <div class="card custom-card border-0 shadow-sm w-100 h-100 mt-4">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center mb-4">
-                                <i class="fas fa-book text-primary fs-4 me-3"></i>
-                                <h3 class="h4 mb-0">Biography</h3>
-                            </div>
-                            <p class="bio-text mb-0 text-start" style="max-width: 100%; white-space: pre-line;">{{ coach.bio|default:"Not specified" }}</p>
-                        </div>
-                    </div>
-                </div>
+                {% endif %}
             </div>
-        </div>
+
+            {% if coach.specialization %}
+                <h4 class="section-title">Specialization</h4>
+                <ul class="section-block text-start d-inline-block mt-2">
+                    {% for line in coach.specialization.splitlines %}
+                        {% if line|slice:":1" == '*' %}
+                            <li>{{ line|slice:"1:" }}</li>
+                        {% elif line %}
+                            <li>{{ line }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <h4 class="section-title">Biography</h4>
+            <div class="section-block">
+                <p class="text-justify mb-0">{{ coach.bio|default:"No biography provided." }}</p>
+            </div>
+
+            {% if coach.goals %}
+                <div class="goals-list text-center mb-4">
+                    <strong>Goals:</strong>
+                    <ul class="list-inline mb-0">
+                        {% for goal in coach.get_goals_list %}
+                            <li class="list-inline-item"><span class="badge bg-info">{{ goal }}</span></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        {% else %}
+            <p class="text-center text-muted">No coach profile found.</p>
+        {% endif %}
     </div>
 </div>
-{% else %}
-<div class="container py-5 text-center">
-    <div class="alert alert-info mt-5">This page is only visible to non-logged-in users.</div>
-</div>
-{% endif %}
-{% endblock %} 
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+.section-title {
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    color: #6cc24a;
+    font-weight: bold;
+}
+.section-block {
+    margin-bottom: 2rem;
+}
+</style>
+{% endblock %}

@@ -1,5 +1,13 @@
 from django.db import models
-from django.db.models import CASCADE, CharField, DateTimeField, TextField, DecimalField, ForeignKey, BooleanField
+from django.db.models import (
+    CASCADE,
+    CharField,
+    DateTimeField,
+    TextField,
+    DecimalField,
+    ForeignKey,
+    BooleanField,
+)
 from django.utils import timezone
 from django.conf import settings
 from accounts.models import Profile
@@ -48,62 +56,67 @@ class Service(models.Model):
     price = DecimalField(max_digits=10, decimal_places=2)
     duration = models.IntegerField()  # in minutes
     is_active = BooleanField(default=True)
-    currency = CharField(max_length=3, default='USD')
-    category = models.ForeignKey('Category', on_delete=models.CASCADE, related_name='services', null=True, blank=True)
-    coach = ForeignKey(settings.AUTH_USER_MODEL, on_delete=CASCADE, related_name='services')
+    currency = CharField(max_length=3, default="USD")
+    category = models.ForeignKey(
+        "Category",
+        on_delete=models.CASCADE,
+        related_name="services",
+        null=True,
+        blank=True,
+    )
+    coach = ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=CASCADE, related_name="services"
+    )
     session_type = models.CharField(
-        choices=[('online', 'Online'), ('personal', 'Personal')],
-        default='online',
-        max_length=20
+        choices=[("online", "Online"), ("personal", "Personal")],
+        default="online",
+        max_length=20,
     )
     created = DateTimeField(auto_now_add=True)
     updated = DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.name} by {self.coach.get_full_name()}"
+        full_name = self.coach.get_full_name()
+        return f"{self.name} by {full_name}" if full_name else self.name
 
 
 class Session(models.Model):
     SESSION_TYPES = [
-        ('online', 'Online'),
-        ('personal', 'Personal'),
-    ]
-    
-    SESSION_STATUS = [
-        ('CANCELLED', 'Cancelled'),
-        ('CONFIRMED', 'Confirmed'),
-        ('CHANGED', 'Changed'),
-        ('PENDING', 'Pending'),
+        ("online", "Online"),
+        ("personal", "Personal"),
     ]
 
-    client = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='client_sessions')
-    coach = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='coach_sessions')
-    service = models.ForeignKey('viewer.Service', on_delete=models.CASCADE)
+    SESSION_STATUS = [
+        ("CANCELLED", "Cancelled"),
+        ("CONFIRMED", "Confirmed"),
+        ("CHANGED", "Changed"),
+        ("PENDING", "Pending"),
+    ]
+
+    client = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="client_sessions"
+    )
+    coach = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="coach_sessions"
+    )
+    service = models.ForeignKey("viewer.Service", on_delete=models.CASCADE)
     date_time = models.DateTimeField()
-    duration = models.IntegerField(help_text='Duration in minutes')
-    type = models.CharField(max_length=10, choices=SESSION_TYPES, default='online')
-    status = models.CharField(max_length=20, choices=SESSION_STATUS, default='PENDING')
+    duration = models.IntegerField(help_text="Duration in minutes")
+    type = models.CharField(max_length=10, choices=SESSION_TYPES, default="online")
+    status = models.CharField(max_length=20, choices=SESSION_STATUS, default="PENDING")
     notes = models.TextField(blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     google_calendar_event_id = models.CharField(max_length=255, blank=True, null=True)
-    meeting_url = models.URLField(blank=True, null=True, help_text='Link for online session (Zoom, Meet, etc.)')
-    meeting_address = models.CharField(max_length=255, blank=True, null=True, help_text='Address for personal session')
+    meeting_url = models.URLField(
+        blank=True, null=True, help_text="Link for online session (Zoom, Meet, etc.)"
+    )
+    meeting_address = models.CharField(
+        max_length=255, blank=True, null=True, help_text="Address for personal session"
+    )
 
     class Meta:
-        ordering = ['-date_time']
-        constraints = [
-            models.CheckConstraint(
-                check=models.Q(status__in=['CANCELLED', 'CONFIRMED', 'CHANGED', 'PENDING']),
-                name='valid_session_status'
-            ),
-            # Add a unique constraint for coach's time slots
-            models.UniqueConstraint(
-                fields=['coach', 'date_time'],
-                condition=models.Q(status__in=['CONFIRMED', 'PENDING']),
-                name='unique_coach_time_slot'
-            )
-        ]
+        ordering = ["-date_time"]
 
     def __str__(self):
         return f"{self.service.name} - {self.date_time}"
@@ -115,17 +128,34 @@ class Session(models.Model):
     @property
     def can_cancel(self):
         """Session can be cancelled more than 24 hours in advance"""
-        if self.status != 'CONFIRMED':
+        if not self.date_time:
+            return False
+        if self.status not in ["CONFIRMED", "PENDING"]:
             return False
         return (self.date_time - timezone.now()).total_seconds() > 24 * 60 * 60
 
+    @property
+    def can_edit(self):
+        """Session can be edited more than 24 hours in advance"""
+        if not self.date_time:
+            return False
+        if self.status not in ["CONFIRMED", "PENDING"]:
+            return False
+        return (self.date_time - timezone.now()).total_seconds() > 24 * 60 * 60
+
+    @property
+    def is_paid(self):
+        return self.payments.filter(paid_at__isnull=False).exists()
+
 
 class Payment(models.Model):
-    session = ForeignKey('viewer.Session', on_delete=CASCADE, related_name='payments')
+    session = ForeignKey("viewer.Session", on_delete=CASCADE, related_name="payments")
     amount = DecimalField(max_digits=10, decimal_places=2)
-    payment_method = models.ForeignKey('viewer.PaymentMethod', on_delete=models.CASCADE)
+    payment_method = models.ForeignKey("viewer.PaymentMethod", on_delete=models.CASCADE)
     paid_at = DateTimeField(null=True, blank=True)
-    transaction_id = models.CharField(max_length=100, blank=True, null=True)  # PayPal order ID
+    transaction_id = models.CharField(
+        max_length=100, blank=True, null=True
+    )  # PayPal order ID
     created = DateTimeField(auto_now_add=True)
     updated = DateTimeField(auto_now=True)
 
@@ -134,7 +164,7 @@ class Payment(models.Model):
 
 
 class Review(models.Model):
-    session = ForeignKey('viewer.Session', on_delete=CASCADE, related_name='reviews')
+    session = ForeignKey("viewer.Session", on_delete=CASCADE, related_name="reviews")
     rating = models.IntegerField()
     comment = TextField(null=True, blank=True)
     created = DateTimeField(auto_now_add=True)
@@ -142,6 +172,7 @@ class Review(models.Model):
 
     def __str__(self):
         return f"Review for {self.session}"
+
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
@@ -152,4 +183,3 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
-

@@ -7,108 +7,153 @@
     {% endif %}
 {% endblock %}
 
-{% block card_container %}
-    <div class="row justify-content-center">
-        <div class="col-12 col-md-10 col-lg-8 col-xl-10">
-            {% block card_content %}
-            <div class="card page-card p-4">
-                <div class="text-center mb-4">
-                    <div class="avatar-container mb-3">
-                        {% if profile.avatar %}
-                            <img src="{{ profile.avatar.url }}" alt="Profile picture" class="avatar rounded-circle" style="width: 120px; height: 120px; object-fit: cover;">
-                        {% else %}
-                            <div class="avatar-placeholder rounded-circle d-flex align-items-center justify-content-center" style="width: 120px; height: 120px; background-color: #e9ecef; font-size: 3rem;">
-                                {{ profile.user.get_full_name|default:profile.user.username|make_list|first|upper }}
-                            </div>
-                        {% endif %}
-                    </div>
-                    <h3 class="h4 mb-2">{{ profile.user.get_full_name|default:profile.user.username }}</h3>
-                    <div class="mb-3 text-center">
-                        {% if profile.is_coach %}
-                            <span class="badge bg-success" style="font-size:1rem;">COACH</span>
-                        {% else %}
-                            <span class="badge bg-info" style="font-size:1rem;">CLIENT</span>
-                        {% endif %}
-                    </div>
-                </div>
-
-                {% if profile.is_coach %}
-                    <!-- Coach Profile Content -->
-                    <div class="profile-content">
-                        <h4 class="h5 mb-3 text-success">Contact Information</h4>
-                        <dl class="row">
-                            <dt class="col-sm-4">Email</dt>
-                            <dd class="col-sm-8">{{ profile.user.email }}</dd>
-                            <dt class="col-sm-4">Phone</dt>
-                            <dd class="col-sm-8">{{ profile.phone|default:"Not provided" }}</dd>
-                            <dt class="col-sm-4">Preferred Contact</dt>
-                            <dd class="col-sm-8">{{ profile.get_preferred_contact_display }}</dd>
-                            <dt class="col-sm-4">Timezone</dt>
-                            <dd class="col-sm-8">{{ profile.timezone }}</dd>
-                        </dl>
-
-                        {% if profile.specialization %}
-                            <h4 class="h5 mb-3 text-success">Specialization</h4>
-                            <p>{{ profile.specialization }}</p>
-                        {% endif %}
-
-                        <h4 class="h5 mb-3 text-success">About Me</h4>
-                        <div class="mb-4">
-                            {{ profile.bio|default:"No biography available"|linebreaks }}
-                        </div>
-                        {% if request.user.is_authenticated and request.user.profile.pk == profile.pk %}
-                            <div class="mt-4">
-                                <a href="{% url 'accounts:profile_edit' %}" class="btn btn-success">
-                                    <i class="fas fa-edit me-2"></i>Edit Profile
-                                </a>
-                            </div>
-                        {% endif %}
-                    </div>
+{% block content %}
+<div class="card page-card">
+    <div class="card-body">
+        <div class="text-center mb-4">
+            <div class="avatar-container mb-3">
+                {% if user.profile.avatar %}
+                    <img src="{{ user.profile.avatar.url }}" alt="Profile picture" class="avatar">
                 {% else %}
-                    <!-- Client Profile Content -->
-                    <div class="profile-content">
-                        <h4 class="h5 mb-3 text-success">Personal Information</h4>
-                        <dl class="row">
-                            <dt class="col-sm-4">Full Name</dt>
-                            <dd class="col-sm-8">{{ profile.user.get_full_name }}</dd>
-                            <dt class="col-sm-4">Email</dt>
-                            <dd class="col-sm-8">{{ profile.user.email }}</dd>
-                            <dt class="col-sm-4">Phone</dt>
-                            <dd class="col-sm-8">{{ profile.phone|default:"Not provided" }}</dd>
-                            <dt class="col-sm-4">Date of Birth</dt>
-                            <dd class="col-sm-8">{{ profile.date_of_birth|default:"Not provided" }}</dd>
-                            <dt class="col-sm-4">Sex</dt>
-                            <dd class="col-sm-8">{{ profile.get_sex_display|default:"Not provided" }}</dd>
-                            <dt class="col-sm-4">Street Address</dt>
-                            <dd class="col-sm-8">{{ profile.street_address|default:"Not provided" }}</dd>
-                            <dt class="col-sm-4">City</dt>
-                            <dd class="col-sm-8">{{ profile.city|default:"Not provided" }}</dd>
-                            <dt class="col-sm-4">State</dt>
-                            <dd class="col-sm-8">{{ profile.state|default:"Not provided" }}</dd>
-                            <dt class="col-sm-4">ZIP Code</dt>
-                            <dd class="col-sm-8">{{ profile.zip_code|default:"Not provided" }}</dd>
-                            <dt class="col-sm-4">Timezone</dt>
-                            <dd class="col-sm-8">{{ profile.timezone }}</dd>
-                            <dt class="col-sm-4">Preferred Contact</dt>
-                            <dd class="col-sm-8">{{ profile.get_preferred_contact_display }}</dd>
-                        </dl>
-
-                        {% if profile.goals %}
-                            <h4 class="h5 mb-3 text-success">Goals</h4>
-                            <p>{{ profile.goals }}</p>
-                        {% endif %}
-
-                        {% if request.user.is_authenticated and request.user.profile.pk == profile.pk %}
-                            <div class="mt-4">
-                                <a href="{% url 'accounts:profile_edit' %}" class="btn btn-success">
-                                    <i class="fas fa-edit me-2"></i>Edit Profile
-                                </a>
-                            </div>
-                        {% endif %}
+                    <div class="avatar-placeholder">
+                        {{ user.get_full_name|default:user.username|make_list|first|upper }}
                     </div>
                 {% endif %}
             </div>
-            {% endblock %}
+            <h1>{{ user.get_full_name|default:user.username }}</h1>
+            {% if user.profile.is_coach %}
+                <span class="badge bg-success">Coach</span>
+            {% elif user.profile.is_client %}
+                <span class="badge bg-primary">Client</span>
+            {% endif %}
         </div>
+
+        {% if request.user == user %}
+        <div class="text-center mb-4">
+            <a href="{% url 'accounts:profile_edit' %}" class="get-started-btn">
+                <i class="fas fa-edit me-2"></i>Edit Profile
+            </a>
+        </div>
+        {% endif %}
+
+        {% if user.profile.is_coach %}
+            <!-- === KOUČ PROFIL === -->
+            <div class="info-list text-center mb-4">
+                <div><strong>Email:</strong> {{ user.email }}</div>
+                {% if user.profile.phone %}
+                    <div><strong>Phone:</strong> {{ user.profile.phone }}</div>
+                {% endif %}
+                {% if user.profile.preferred_contact %}
+                    <div><strong>Preferred Contact:</strong> {{ user.profile.get_preferred_contact_display }}</div>
+                {% endif %}
+                {% if user.profile.timezone %}
+                    <div><strong>Timezone:</strong> {{ user.profile.timezone }}</div>
+                {% endif %}
+                {% if user.profile.city or user.profile.state or user.profile.street_address or user.profile.zip_code %}
+                    <div><strong>Address:</strong>
+                        {{ user.profile.street_address }}{% if user.profile.street_address %}, {% endif %}
+                        {{ user.profile.city }}{% if user.profile.city %}, {% endif %}
+                        {{ user.profile.state }}{% if user.profile.state %}, {% endif %}
+                        {{ user.profile.zip_code }}
+                    </div>
+                {% endif %}
+            </div>
+
+            {% if user.profile.specialization %}
+                <h4 class="section-heading">Specialization</h4>
+                <ul class="text-start d-inline-block mt-2">
+                    {% for line in user.profile.specialization.splitlines %}
+                        {% if line|slice:":1" == '*' %}
+                            <li>{{ line|slice:"1:" }}</li>
+                        {% elif line %}
+                            <li>{{ line }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            {% if user.profile.bio %}
+                <h4 class="section-heading">Biography</h4>
+                <p class="text-justify">{{ user.profile.bio }}</p>
+            {% endif %}
+
+            {% if user.profile.goals %}
+                <h4 class="section-heading">Goals</h4>
+                <ul class="list-inline text-center mt-3">
+                    {% for goal in user.profile.get_goals_list %}
+                        <li class="list-inline-item"><span class="badge bg-info">{{ goal }}</span></li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+        {% elif user.profile.is_client %}
+            <!-- === KLIENT PROFIL === -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="mb-3">Personal Information</h4>
+                    <div class="info-list">
+                        <div><strong>First Name:</strong> {{ user.first_name|default:"-" }}</div>
+                        <div><strong>Middle Initial:</strong> {{ user.profile.middle_initial|default:"-" }}</div>
+                        <div><strong>Last Name:</strong> {{ user.last_name|default:"-" }}</div>
+                        <div><strong>Date of Birth:</strong> {{ user.profile.date_of_birth|default:"-" }}</div>
+                        <div><strong>Sex:</strong> {{ user.profile.get_sex_display|default:"-" }}</div>
+                        <div><strong>Marital Status:</strong> {{ user.profile.get_marital_status_display|default:"-" }}</div>
+                        <div><strong>Occupation:</strong> {{ user.profile.occupation|default:"-" }}</div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="mb-3">Contact</h4>
+                    <div class="info-list">
+                        <div><strong>Email:</strong> {{ user.email }}</div>
+                        <div><strong>Phone:</strong> {{ user.profile.phone_prefix|default:"" }} {{ user.profile.phone|default:"-" }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="mb-3">Address</h4>
+                    <div class="info-list">
+                        <div><strong>Street:</strong> {{ user.profile.street_address|default:"-" }}</div>
+                        <div><strong>City:</strong> {{ user.profile.city|default:"-" }}</div>
+                        <div><strong>State:</strong> {{ user.profile.state|default:"-" }}</div>
+                        <div><strong>ZIP Code:</strong> {{ user.profile.zip_code|default:"-" }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="mb-3">Medical History</h4>
+                    <div class="info-list">
+                        <div><strong>Emotional Treatment:</strong> {{ user.profile.emotional_treatment_history|default:"-" }}</div>
+                        <div><strong>Medical Conditions:</strong> {% if user.profile.medical_conditions %}{{ user.profile.medical_conditions|join:", " }}{% else %}-{% endif %}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="mb-3">Goals and Interests</h4>
+                    <div class="info-list">
+                        <div><strong>Goals:</strong> {% if user.profile.goals %}{{ user.profile.goals|join:", " }}{% else %}-{% endif %}</div>
+                        <div><strong>Fears/Phobias:</strong> {{ user.profile.fears_phobias|default:"-" }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="mb-3">Consent</h4>
+                    <div class="info-list">
+                        <div><strong>Therapy Consent:</strong> {% if user.profile.therapy_consent %}Yes{% else %}No{% endif %}</div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
     </div>
-{% endblock %} 
+</div>
+{% endblock %}

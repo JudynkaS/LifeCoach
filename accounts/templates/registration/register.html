@@ -1,192 +1,50 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
-{% load static %}
 
 {% block title %}Register - LifeCoach{% endblock %}
 
-{% block card_container %}
-    <div class="row justify-content-center">
-        <div class="col-12 col-md-10 col-lg-8 col-xl-10">
-            {% block card_content %}
-            <div class="card shadow-sm">
-                <div class="card-header bg-white border-bottom">
-                    <h3 class="h4 mb-0 text-center text-success">Create Your Account</h3>
-                </div>
-                <div class="card-body p-4">
-                    <p class="text-center text-muted mb-4">Please fill in all required fields to create your account.</p>
-                    <form method="post" enctype="multipart/form-data" novalidate>
-                        {% csrf_token %}
-                        {% if form.non_field_errors %}
-                            <div class="alert alert-danger">
-                                {{ form.non_field_errors }}
-                            </div>
-                        {% endif %}
-                        
-                        <!-- Account Information -->
-                        <div class="mb-4">
-                            <h4 class="h5 mb-3 text-success">Account Information</h4>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    {{ form.username|as_crispy_field }}
-                                </div>
-                                <div class="col-md-6">
-                                    {{ form.email|as_crispy_field }}
-                                </div>
-                                <div class="col-md-6">
-                                    {{ form.password1|as_crispy_field }}
-                                </div>
-                                <div class="col-md-6">
-                                    {{ form.password2|as_crispy_field }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Personal Information -->
-                        <div class="mb-4">
-                            <h4 class="h5 mb-3 text-success">Personal Information</h4>
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    {{ form.first_name|as_crispy_field }}
-                                </div>
-                                <div class="col-md-8">
-                                    {{ form.last_name|as_crispy_field }}
-                                </div>
-                                <div class="col-md-4">
-                                    {{ form.date_of_birth|as_crispy_field }}
-                                </div>
-                                <div class="col-md-4">
-                                    {{ form.sex|as_crispy_field }}
-                                </div>
-                                <div class="col-md-4">
-                                    {{ form.marital_status|as_crispy_field }}
-                                </div>
-                                <div class="col-12">
-                                    {{ form.occupation|as_crispy_field }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Address -->
-                        <div class="mb-4">
-                            <h4 class="h5 mb-3 text-success">Address</h4>
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    {{ form.street_address|as_crispy_field }}
-                                </div>
-                                <div class="col-md-5">
-                                    {{ form.city|as_crispy_field }}
-                                </div>
-                                <div class="col-md-4">
-                                    {{ form.state|as_crispy_field }}
-                                </div>
-                                <div class="col-md-3">
-                                    {{ form.zip_code|as_crispy_field }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Contact -->
-                        <div class="mb-4">
-                            <h4 class="h5 mb-3 text-success">Contact</h4>
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    {{ form.phone_prefix|as_crispy_field }}
-                                </div>
-                                <div class="col-md-8">
-                                    {{ form.phone|as_crispy_field }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Medical History -->
-                        <div class="mb-4">
-                            <h4 class="h5 mb-3 text-success">Medical History</h4>
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    {{ form.emotional_treatment|as_crispy_field }}
-                                </div>
-                                <div class="col-12">
-                                    {{ form.emotional_treatment_explanation|as_crispy_field }}
-                                </div>
-                                <div class="col-12">
-                                    {{ form.medical_conditions|as_crispy_field }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Goals and Interests -->
-                        <div class="mb-4">
-                            <h4 class="h5 mb-3 text-success">Goals and Interests</h4>
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    {{ form.specialization|as_crispy_field }}
-                                </div>
-                                <div class="col-12">
-                                    {{ form.goals|as_crispy_field }}
-                                </div>
-                                <div class="col-12">
-                                    {{ form.fears_phobias|as_crispy_field }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Referral -->
-                        <div class="mb-4">
-                            <h4 class="h5 mb-3 text-success">Referral</h4>
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    {{ form.referral_source|as_crispy_field }}
-                                </div>
-                                <div class="col-12">
-                                    {{ form.referral_source_other|as_crispy_field }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Contact Preferences -->
-                        <div class="mb-4">
-                            <h4 class="h5 mb-3 text-success">Contact Preferences</h4>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    {{ form.timezone|as_crispy_field }}
-                                </div>
-                                <div class="col-md-6">
-                                    {{ form.preferred_contact|as_crispy_field }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Hypnotherapy Consent -->
-                        <div class="mb-4">
-                            <div class="consent-info" style="font-size: 1rem;">
-                                I am willing to be guided through relaxation, visual imagery, creative visualization, hypnosis, and stress reduction processes and techniques 
-                                for the purpose of vocational or a vocational self-improvement.  I understand that the hypnotherapy I am receiving is not a substitute for 
-                                normal medical care and I have been advised to discuss this hypnotherapy with any doctor who is taking care of me now or in the future.  
-                                Additionally, I should continue any present medical treatment and consult my regular medical doctor for treatment of any new or old 
-                                illnesses.
-                            </div>
-                        </div>
-
-                        <!-- Consent -->
-                        <div class="mb-4">
-                            <h4 class="h5 mb-3 text-success">Consent</h4>
-                            <div class="form-check mb-3">
-                                {{ form.therapy_consent|as_crispy_field }}
-                            </div>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-success py-3 mt-2 fw-bold">
-                                <i class="fas fa-user-plus me-2"></i>Create Account
-                            </button>
-                            <a href="{% url 'accounts:login' %}" class="btn btn-outline-secondary fw-bold">
-                                Back to Login
-                            </a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            {% endblock %}
+{% block content %}
+<div class="form-card">
+    <h2 class="text-primary-green mb-4">Registration</h2>
+    {% if form.errors %}
+        <div class="alert alert-danger">
+            <h5 class="alert-heading">Please correct the following errors:</h5>
+            <ul class="mb-0">
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <li>{{ field.label }}: {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
         </div>
+    {% endif %}
+    <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        {% for field in form %}
+            {% if field.name != 'therapy_consent' %}
+                {{ field|as_crispy_field }}
+            {% endif %}
+        {% endfor %}
+        <div class="mt-3 p-3 border rounded bg-light" style="font-size: 0.9em; max-height: 200px; overflow-y: auto;">
+            I am willing to be guided through relaxation, visual imagery, creative visualization, hypnosis, and stress reduction processes and techniques
+            for the purpose of vocational or avocational self-improvement. I understand that the hypnotherapy I am receiving is not a substitute for
+            normal medical care and I have been advised to discuss this hypnotherapy with any doctor who is taking care of me now or in the future.
+            Additionally, I should continue any present medical treatment and consult my regular medical doctor for treatment of any new or old illnesses.
+        </div>
+        <div class="mt-3">
+            {{ form.therapy_consent|as_crispy_field }}
+        </div>
+        <div class="form-actions mt-4 text-center">
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-user-plus me-2"></i>Register
+            </button>
+        </div>
+    </form>
+    <div class="text-center mt-3">
+        <a href="{% url 'accounts:login' %}" class="text-link">Already have an account? Sign in here</a>
     </div>
+</div>
 {% endblock %}

@@ -4,31 +4,25 @@
 {% block title %}Upcoming Sessions{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="page-content">
-            <div class="card page-card">
-                <h1 class="text-center mb-4 text-primary-green page-title">Upcoming Sessions</h1>
-                {% if object_list %}
-                    <div class="row g-3">
-                        {% for session in object_list %}
-                        <div class="col-md-6 col-lg-4">
-                            <div class="card h-100 shadow-sm border-0 rounded-4">
-                                <div class="card-body text-center">
-                                    <h5 class="card-title">{{ session.service.name }}</h5>
-                                    <p class="card-text mb-1">{{ session.date_time|date:"F j, Y H:i" }}</p>
-                                    <p class="card-text mb-1">{{ session.get_type_display }}</p>
-                                    <a href="{% url 'viewer:session_detail' session.id %}" class="btn btn-outline-primary btn-sm">Detail</a>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
+<div class="center-box">
+    <h1 class="text-center mb-4 text-primary-green page-title">Upcoming Sessions</h1>
+    {% if object_list %}
+        <div class="row g-3">
+            {% for session in object_list %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-0 rounded-4">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">{{ session.service.name }}</h5>
+                        <p class="card-text mb-1">{{ session.date_time|date:"F j, Y H:i" }}</p>
+                        <p class="card-text mb-1">{{ session.get_type_display }}</p>
+                        <a href="{% url 'viewer:session_detail' session.id %}" class="btn btn-outline-primary btn-sm">Detail</a>
                     </div>
-                {% else %}
-                    <p class="text-center text-muted">No upcoming sessions found.</p>
-                {% endif %}
+                </div>
             </div>
+            {% endfor %}
         </div>
-    </div>
+    {% else %}
+        <p class="text-center text-muted">No upcoming sessions found.</p>
+    {% endif %}
 </div>
 {% endblock %} 

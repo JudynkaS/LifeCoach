@@ -1,117 +1,325 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 {% load static %}
+{% load tz %}
 
-{% block title %}Book a Session{% endblock %}
+{% block title %}{% if is_edit %}Edit Session{% else %}Book a Session{% endif %}{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-12 col-md-10 col-lg-8 col-xl-10">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white border-bottom">
-                    <h3 class="h4 mb-0 text-center text-success">{% if is_edit %}Edit Session{% else %}Book a Session{% endif %}</h3>
+<div class="page-container">
+    <div class="form-card">
+        <h2 class="text-primary-green mb-4">{% if is_edit %}Edit Reservation{% else %}Book a Session{% endif %}</h2>
+        
+        <!-- Debug výpis -->
+        {% if debug %}
+        <div class="alert alert-info">
+            <pre>{{ services_json|pprint }}</pre>
+        </div>
+        {% endif %}
+
+        {% if is_edit %}
+            <p class="text-muted mt-2 mb-4">
+                {% if user.profile.is_coach %}
+                You can only change the date/time and meeting details.
+                Other details are from the original booking.
+                {% else %}
+                {% if hours_until_session is not None and hours_until_session < 24 %}
+                <div class="alert alert-warning">
+                    This session is less than 24 hours away. Changes are not allowed. Please contact your coach if you need to reschedule.
                 </div>
-                <div class="card-body p-4">
-                    {% if user.profile.is_coach and not is_edit %}
-                        <div class="alert alert-info text-center mb-4">
-                            <i class="fas fa-info-circle me-2"></i>
-                            As a coach, you cannot book sessions. You can only receive bookings from clients.
-                        </div>
-                    {% endif %}
-                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate id="booking-form">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            {{ form.service.label_tag }}
-                            {{ form.service }}
-                            {% if form.service.errors %}<div class="text-danger small">{{ form.service.errors }}</div>{% endif %}
-                        </div>
-                        <div class="mb-3">
-                            {{ form.duration.label_tag }}
-                            {{ form.duration }}
-                            {% if form.duration.errors %}<div class="text-danger small">{{ form.duration.errors }}</div>{% endif %}
-                        </div>
-                        <div class="mb-3">
-                            {{ form.price.label_tag }}
-                            {{ form.price }}
-                            {% if form.price.errors %}<div class="text-danger small">{{ form.price.errors }}</div>{% endif %}
-                        </div>
-                        <div class="mb-3">
-                            {{ form.description.label_tag }}
-                            {{ form.description }}
-                            {% if form.description.errors %}<div class="text-danger small">{{ form.description.errors }}</div>{% endif %}
-                        </div>
-                        <div class="mb-3">
-                            {{ form.notes.label_tag }}
-                            {{ form.notes }}
-                            {% if form.notes.errors %}<div class="text-danger small">{{ form.notes.errors }}</div>{% endif %}
-                        </div>
-                        <div class="mb-3">
-                            {{ form.payment_method.label_tag }}
-                            {{ form.payment_method }}
-                            {% if form.payment_method.errors %}<div class="text-danger small">{{ form.payment_method.errors }}</div>{% endif %}
-                        </div>
-                        <div class="mb-3">
-                            {{ form.type.label_tag }}
-                            <input type="hidden" name="type" id="id_type" value="{{ form.type.value|default:'' }}">
-                            <input type="text" class="form-control" value="{{ form.type.value|default:'' }}" readonly>
-                            {% if form.type.errors %}<div class="text-danger small">{{ form.type.errors }}</div>{% endif %}
-                        </div>
-                        <div class="mb-3" id="meeting-url-group" style="display:none;">
-                            {{ form.meeting_url.label_tag }}
-                            {{ form.meeting_url }}
-                            {% if form.meeting_url.errors %}<div class="text-danger small">{{ form.meeting_url.errors }}</div>{% endif %}
-                        </div>
-                        <div class="mb-3" id="meeting-address-group" style="display:none;">
-                            {{ form.meeting_address.label_tag }}
-                            {{ form.meeting_address }}
-                            {% if form.meeting_address.errors %}<div class="text-danger small">{{ form.meeting_address.errors }}</div>{% endif %}
-                        </div>
-                        <div id="service-details" class="mb-3"></div>
-                        <div id="date-time-container" class="mb-3"></div>
-                        <div class="d-grid gap-2 mt-4">
-                            {% if form.errors %}
-                                <div class="alert alert-danger">{{ form.errors }}</div>
-                            {% endif %}
-                            <button type="submit" class="btn btn-success py-3 fw-bold">
-                                <i class="fas fa-save me-2"></i>
-                                {% if user.profile.is_coach and is_edit and session.status in 'PENDING,CHANGED' %}
-                                    Confirm Session
-                                {% elif is_edit %}
-                                    Save Changes
-                                {% else %}
-                                    Book Session
-                                {% endif %}
-                            </button>
-                            <a href="{% url 'viewer:session_history' %}" class="btn btn-outline-secondary fw-bold">
-                                Back to Session History
-                            </a>
-                        </div>
-                    </form>
+                {% else %}
+                You can change the date/time and notes for this session.
+                Service and session type cannot be changed - please cancel and create a new booking if you need to change these.
+                {% endif %}
+                {% endif %}
+            </p>
+        {% endif %}
+        
+        <p class="text-muted mb-4">
+            All times are shown in your timezone:
+            <strong>{{ user.profile.timezone }}</strong>
+        </p>
+
+        <form method="post" enctype="multipart/form-data" id="booking-form">
+            {% csrf_token %}
+            <input type="hidden" id="initial_date_time" value="{{ initial_date_time }}">
+            
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            {% if is_edit %}
+                <div class="form-group mb-3">
+                    <label class="form-label">Service</label>
+                    <input type="text" class="form-control" readonly value="{{ form.instance.service.name }}">
+                    <input type="hidden" id="id_service" value="{{ form.instance.service.id }}">
                 </div>
+                
+                <div class="form-group row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Price</label>
+                        <input type="text" class="form-control" readonly value="{{ form.instance.service.price }} {{ form.instance.service.currency }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Duration</label>
+                        <input type="text" class="form-control" readonly value="{{ form.instance.service.duration }} minutes">
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" rows="4" readonly>{{ form.instance.service.description }}</textarea>
+                </div>
+
+                {% if user.profile.is_coach %}
+                <div class="form-group mb-3">
+                    {{ form.type|as_crispy_field }}
+                </div>
+                {% else %}
+                <div class="form-group mb-3">
+                    <label class="form-label">Session Type</label>
+                    <input type="text" class="form-control" readonly value="{{ form.instance.get_type_display }}">
+                    <input type="hidden" name="type" value="{{ form.instance.type }}">
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="form-group mb-3">
+                    {{ form.service|as_crispy_field }}
+                </div>
+                
+                <div class="form-group row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Price</label>
+                        <input type="text" id="id_price" class="form-control" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Duration</label>
+                        <input type="text" id="id_duration" class="form-control" readonly>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea id="id_description" class="form-control" rows="4" readonly></textarea>
+                </div>
+
+                {% if user.profile.is_coach %}
+                <div class="form-group mb-3">
+                    {{ form.type|as_crispy_field }}
+                </div>
+                {% else %}
+                <div class="form-group mb-3">
+                    <label class="form-label">Session Type</label>
+                    <input type="text" id="session_type_display" class="form-control" readonly>
+                    <input type="hidden" id="session_type_hidden" name="type">
+                </div>
+                {% endif %}
+            {% endif %}
+
+            <div class="form-group mb-3">
+                <label for="id_date_time" class="form-label">Date time*</label>
+                {# Pokud je editace, select není disabled #}
+                <select name="date_time" id="id_date_time" class="form-control" {% if not form.service.value and not is_edit %}disabled{% endif %}>
+                    <option value="">{% if form.service.value %}Loading available slots...{% else %}Please select a service first{% endif %}</option>
+                </select>
+                {% if form.date_time.errors %}
+                    <div class="invalid-feedback d-block">{{ form.date_time.errors.0 }}</div>
+                {% endif %}
             </div>
+
+            {% if user.profile.is_coach %}
+                <div class="form-group mb-3" id="div_id_meeting_url">
+                    {{ form.meeting_url|as_crispy_field }}
+                </div>
+                <div class="form-group mb-3" id="div_id_meeting_address">
+                    {{ form.meeting_address|as_crispy_field }}
+                </div>
+            {% endif %}
+
+            {% if not user.profile.is_coach %}
+                <div class="form-group mb-3">
+                    {{ form.notes|as_crispy_field }}
+                </div>
+
+                <div class="form-group mb-3">
+                    {{ form.payment_method|as_crispy_field }}
+                </div>
+            {% endif %}
+
+            <div class="form-actions d-flex justify-content-center gap-3 mt-4">
+                <button type="submit" class="btn btn-success">
+                    {% if is_edit %}Save Changes{% else %}Book Session{% endif %}
+                </button>
+                {% if user.profile.is_coach and form.instance.status == 'PENDING' %}
+                    <button type="submit" name="confirm_and_save" value="1" class="btn btn-success">
+                        Confirm & Save
+                    </button>
+                {% endif %}
+                {% if form.instance.pk and form.instance.can_cancel %}
+                    <!-- Cancel Session button removed -->
+                {% endif %}
+            </div>
+        </form>
+        <div class="d-flex justify-content-center mt-4">
+            <a href="{% url 'viewer:session_history' %}" class="btn btn-secondary btn-lg px-4 fw-bold">
+                Back to Sessions
+            </a>
         </div>
     </div>
 </div>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="{% static 'js/booking.js' %}"></script>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
 <script>
-$(function() {
-    function toggleMeetingFields() {
-        var type = $('#id_type').val();
+function isoToBookingFormat(isoString) {
+    if (!isoString) return '';
+    const dt = new Date(isoString);
+    const pad = n => n < 10 ? '0' + n : n;
+    return dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate()) + ' ' + pad(dt.getHours()) + ':' + pad(dt.getMinutes());
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const initialInput = document.getElementById('initial_date_time');
+    // Převod initial_date_time z ISO na správný formát
+    if (initialInput && initialInput.value && initialInput.value.includes('T')) {
+        initialInput.value = isoToBookingFormat(initialInput.value);
+    }
+    const serviceSelect = document.getElementById('id_service');
+    const priceInput = document.getElementById('id_price');
+    const durationInput = document.getElementById('id_duration');
+    const descriptionInput = document.getElementById('id_description');
+    const typeSelect = document.getElementById('id_type');
+    const dateTimeInput = document.getElementById('id_date_time');
+    const meetingUrlField = document.getElementById('div_id_meeting_url');
+    const meetingAddressField = document.getElementById('div_id_meeting_address');
+    const sessionTypeDisplay = document.getElementById('session_type_display');
+    const sessionTypeHidden = document.getElementById('session_type_hidden');
+
+    console.log('Form elements:', {
+        serviceSelect: serviceSelect?.value,
+        dateTimeInput: dateTimeInput?.value,
+        initialInput: initialInput?.value
+    });
+
+    function updateMeetingFields(type) {
         if (type === 'online') {
-            $('#meeting-url-group').show();
-            $('#meeting-address-group').hide();
+            if (meetingUrlField) { meetingUrlField.style.display = 'block'; }
+            if (meetingAddressField) { meetingAddressField.style.display = 'none'; }
         } else if (type === 'personal') {
-            $('#meeting-url-group').hide();
-            $('#meeting-address-group').show();
+            if (meetingUrlField) { meetingUrlField.style.display = 'none'; }
+            if (meetingAddressField) { meetingAddressField.style.display = 'block'; }
         } else {
-            $('#meeting-url-group').hide();
-            $('#meeting-address-group').hide();
+            if (meetingUrlField) { meetingUrlField.style.display = 'none'; }
+            if (meetingAddressField) { meetingAddressField.style.display = 'none'; }
         }
     }
-    $('#id_type').on('change input', toggleMeetingFields);
-    toggleMeetingFields();
+
+    function loadSlots(serviceId) {
+        if (!dateTimeInput) return;
+        dateTimeInput.disabled = true;
+        dateTimeInput.innerHTML = '<option value="">Loading available slots...</option>';
+        fetch(`/api/available-slots/?service=${serviceId}`)
+            .then(response => response.json())
+            .then(data => {
+                let selectedDateTime = dateTimeInput.value;
+                if (!selectedDateTime && initialInput) {
+                    selectedDateTime = initialInput.value;
+                }
+                let found = false;
+                dateTimeInput.innerHTML = '<option value="">Select a time slot</option>';
+                data.slots.forEach(slot => {
+                    const option = document.createElement('option');
+                    // Převod ISO na 'YYYY-MM-DD HH:mm'
+                    const dt = new Date(slot.value);
+                    const pad = n => n < 10 ? '0' + n : n;
+                    const formatted = dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate()) + ' ' + pad(dt.getHours()) + ':' + pad(dt.getMinutes());
+                    option.value = formatted;
+                    option.textContent = slot.display;
+                    if (selectedDateTime && formatted === selectedDateTime) {
+                        option.selected = true;
+                        found = true;
+                    }
+                    dateTimeInput.appendChild(option);
+                });
+                if (selectedDateTime && !found) {
+                    const option = document.createElement('option');
+                    option.value = selectedDateTime;
+                    option.textContent = 'Current: ' + selectedDateTime;
+                    option.selected = true;
+                    dateTimeInput.insertBefore(option, dateTimeInput.firstChild.nextSibling);
+                }
+                dateTimeInput.disabled = false;
+            })
+            .catch(error => {
+                dateTimeInput.innerHTML = '<option value="">Chyba při načítání slotů - zkuste to prosím znovu</option>';
+                dateTimeInput.disabled = true;
+            });
+    }
+
+    if (serviceSelect && serviceSelect.value) {
+        loadSlots(serviceSelect.value);
+    }
+
+    if (serviceSelect) {
+        const servicesData = JSON.parse('{{ services_json|escapejs }}');
+        console.log('Services data loaded:', Object.keys(servicesData).length, 'services');
+
+        if (dateTimeInput && !serviceSelect.value) {
+            dateTimeInput.disabled = true;
+        }
+
+        serviceSelect.addEventListener('change', function() {
+            console.log('Service changed to:', this.value);
+            const selectedService = servicesData[this.value];
+            
+            if (selectedService) {
+                console.log('Selected service data:', selectedService);
+                if (priceInput) priceInput.value = selectedService.price + ' ' + selectedService.currency;
+                if (durationInput) durationInput.value = selectedService.duration + ' minutes';
+                if (descriptionInput) descriptionInput.value = selectedService.description;
+                
+                if (typeSelect) {
+                    typeSelect.value = selectedService.session_type || 'online';
+                    updateMeetingFields(typeSelect.value);
+                }
+                
+                if (sessionTypeDisplay && sessionTypeHidden) {
+                    sessionTypeDisplay.value = selectedService.session_type.charAt(0).toUpperCase() + selectedService.session_type.slice(1);
+                    sessionTypeHidden.value = selectedService.session_type;
+                }
+                
+                loadSlots(this.value);
+            } else {
+                console.log('No service selected');
+                if (priceInput) priceInput.value = '';
+                if (durationInput) durationInput.value = '';
+                if (descriptionInput) descriptionInput.value = '';
+                
+                if (typeSelect) {
+                    typeSelect.value = '';
+                }
+                
+                if (sessionTypeDisplay && sessionTypeHidden) {
+                    sessionTypeDisplay.value = '';
+                    sessionTypeHidden.value = '';
+                }
+                
+                if (dateTimeInput) {
+                    dateTimeInput.disabled = true;
+                    dateTimeInput.innerHTML = '<option value="">Nejdřív vyberte službu</option>';
+                }
+
+                updateMeetingFields('');
+            }
+        });
+    }
+
+    if (typeSelect) {
+        typeSelect.addEventListener('change', function() {
+            updateMeetingFields(this.value);
+        });
+    }
 });
 </script>
 {% endblock %}
