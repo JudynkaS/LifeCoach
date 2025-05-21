@@ -39,9 +39,9 @@ A web application for coaching and psychological counseling.
   - [x] Rating system after completed session
   - [x] Optional written review/comments
 
-- [ ] 6 Reporting (`feature/reporting-analytics`)
-  - [ ] Booking reports
-  - [ ] Payment overviews
+- [x] 6 Reporting (`feature/reporting-analytics`)
+  - [x] Booking reports
+  - [x] Payment overviews
 
 ## Database Structure
 

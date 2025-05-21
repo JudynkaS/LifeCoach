@@ -4,7 +4,7 @@ from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.utils import timezone
 from django.contrib import messages
-from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadRequest, HttpResponseForbidden
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponse
 from django.core.serializers.json import DjangoJSONEncoder
 import json
 from django.views.decorators.csrf import csrf_exempt
@@ -13,7 +13,8 @@ import requests
 import os
 import datetime
 import pytz
-from django.db.models import Q
+from django.db.models import Q, Count, Sum
+from openpyxl import Workbook
 
 from .models import Session, Service, Profile, Review, Payment
 from .forms import ServiceForm, BookingForm, ReviewForm, SessionForm
@@ -605,3 +606,181 @@ class AvailableSlotsView(LoginRequiredMixin, View):
             return JsonResponse({'error': 'Service not found'}, status=404)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+
+class CoachReportView(LoginRequiredMixin, TemplateView):
+    template_name = 'viewer/coach_report.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        coach_profile = user.profile
+
+        # Počet rezervací podle služby
+        service_counts = (
+            Session.objects.filter(coach=coach_profile)
+            .values('service__name')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
+
+        # Počet rezervací podle kategorie
+        category_counts = (
+            Session.objects.filter(coach=coach_profile)
+            .values('service__category__name')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
+
+        # Přehled plateb
+        payments = Payment.objects.filter(session__coach=coach_profile)
+        total_paid = payments.filter(paid_at__isnull=False).aggregate(Sum('amount'))['amount__sum'] or 0
+        total_unpaid = payments.filter(paid_at__isnull=True).aggregate(Sum('amount'))['amount__sum'] or 0
+
+        payment_methods = (
+            payments.values('payment_method__name')
+            .annotate(count=Count('id'), total=Sum('amount'))
+            .order_by('-count')
+        )
+
+        # Nejaktivnější klienti
+        client_counts = (
+            Session.objects.filter(coach=coach_profile)
+            .values('client__user__username')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
+
+        # Průměrné hodnocení služeb
+        from django.db.models import Avg
+        service_ratings = (
+            Review.objects.filter(session__coach=coach_profile)
+            .values('session__service__name')
+            .annotate(avg_rating=Avg('rating'), count=Count('id'))
+            .order_by('-avg_rating')
+        )
+
+        # Rezervace podle stavu
+        status_counts = (
+            Session.objects.filter(coach=coach_profile)
+            .values('status')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
+
+        # Přidám mapu názvu služby na ID pro odkazy na review
+        service_id_map = {s.name: s.id for s in Service.objects.filter(coach=coach_profile.user)}
+        context['service_id_map'] = service_id_map
+
+        context.update({
+            'service_counts': service_counts,
+            'category_counts': category_counts,
+            'total_paid': total_paid,
+            'total_unpaid': total_unpaid,
+            'payment_methods': payment_methods,
+            'client_counts': client_counts,
+            'service_ratings': service_ratings,
+            'status_counts': status_counts,
+        })
+        return context
+
+class CoachReportExportView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        coach_profile = user.profile
+
+        # Data stejně jako v CoachReportView
+        service_counts = (
+            Session.objects.filter(coach=coach_profile)
+            .values('service__name')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
+        category_counts = (
+            Session.objects.filter(coach=coach_profile)
+            .values('service__category__name')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
+        status_counts = (
+            Session.objects.filter(coach=coach_profile)
+            .values('status')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
+        client_counts = (
+            Session.objects.filter(coach=coach_profile)
+            .values('client__user__username')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
+        from django.db.models import Avg
+        service_ratings = (
+            Review.objects.filter(session__coach=coach_profile)
+            .values('session__service__name')
+            .annotate(avg_rating=Avg('rating'), count=Count('id'))
+            .order_by('-avg_rating')
+        )
+        payments = Payment.objects.filter(session__coach=coach_profile)
+        total_paid = payments.filter(paid_at__isnull=False).aggregate(Sum('amount'))['amount__sum'] or 0
+        total_unpaid = payments.filter(paid_at__isnull=True).aggregate(Sum('amount'))['amount__sum'] or 0
+        payment_methods = (
+            payments.values('payment_method__name')
+            .annotate(count=Count('id'), total=Sum('amount'))
+            .order_by('-count')
+        )
+
+        wb = Workbook()
+        ws1 = wb.active
+        ws1.title = "Service Usage"
+        ws1.append(["Service", "Reservations"])
+        for row in service_counts:
+            ws1.append([row['service__name'], row['count']])
+
+        ws2 = wb.create_sheet(title="Categories")
+        ws2.append(["Category", "Reservations"])
+        for row in category_counts:
+            ws2.append([row['service__category__name'] or '-', row['count']])
+
+        ws3 = wb.create_sheet(title="Status")
+        ws3.append(["Status", "Count"])
+        for row in status_counts:
+            ws3.append([row['status'], row['count']])
+
+        ws4 = wb.create_sheet(title="Clients")
+        ws4.append(["Client", "Reservations"])
+        for row in client_counts:
+            ws4.append([row['client__user__username'], row['count']])
+
+        ws5 = wb.create_sheet(title="Service Ratings")
+        ws5.append(["Service", "Average Rating", "Reviews"])
+        for row in service_ratings:
+            ws5.append([row['session__service__name'], row['avg_rating'], row['count']])
+
+        ws6 = wb.create_sheet(title="Payments")
+        ws6.append(["Total paid", total_paid])
+        ws6.append(["Total unpaid", total_unpaid])
+        ws6.append([])
+        ws6.append(["Method", "Count", "Total"])
+        for row in payment_methods:
+            ws6.append([row['payment_method__name'], row['count'], row['total']])
+
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename=coach_report.xlsx'
+        wb.save(response)
+        return response
+
+class ServiceReviewListView(LoginRequiredMixin, ListView):
+    template_name = 'viewer/service_review_list.html'
+    context_object_name = 'reviews'
+
+    def get_queryset(self):
+        service_id = self.kwargs['service_id']
+        return Review.objects.filter(session__service_id=service_id).select_related('session', 'session__client')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from viewer.models import Service
+        context['service'] = Service.objects.get(pk=self.kwargs['service_id'])
+        return context

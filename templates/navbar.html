@@ -62,6 +62,12 @@
                         <a class="nav-link" href="{% url 'viewer:session_history' %}">Session History</a>
                     </li>
 
+                    {% if user.profile.is_coach %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'viewer:coach_report' %}">Reports</a>
+                    </li>
+                    {% endif %}
+
                     <!-- Logout -->
                     <li class="nav-item">
                         <form method="post" action="{% url 'accounts:logout' %}" style="display:inline;">
